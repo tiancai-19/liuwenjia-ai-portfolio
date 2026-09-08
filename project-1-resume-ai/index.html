@@ -11,8 +11,8 @@
     --ink: #1f2937;
     --muted: #6b7280;
     --line: #e5e7eb;
-    --brand: #2563eb;
-    --brand-soft: #eff6ff;
+    --brand: #0F6E56;
+    --brand-soft: #E1F5EE;
     --ok: #16a34a;
     --warn: #d97706;
     --err: #dc2626;
@@ -22,15 +22,23 @@
     margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, sans-serif;
     background: var(--bg); color: var(--ink); line-height: 1.6;
   }
+  .topband { height: 4px; background: var(--brand); }
   header {
-    background: linear-gradient(135deg, #1e3a8a, #2563eb);
-    color: #fff; padding: 28px 20px; text-align: center;
+    position: relative;
+    background: var(--bg); color: var(--ink); padding: 20px; text-align: center;
+    border-bottom: 1px solid var(--line);
   }
-  header h1 { margin: 0 0 6px; font-size: 22px; }
-  header p { margin: 0; opacity: .9; font-size: 14px; }
+  header h1 { margin: 0 0 6px; font-size: 22px; color: var(--ink); }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  .back {
+    position: absolute; top: 16px; left: 20px;
+    color: var(--brand); font-size: 13px; text-decoration: none;
+  }
+  .head-center { display: inline-block; text-align: center; }
+  .back:hover { text-decoration: underline; }
   .badge {
     display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 999px;
-    background: rgba(255,255,255,.18); font-size: 12px;
+    background: var(--brand-soft); color: var(--brand); font-size: 12px;
   }
   .wrap { max-width: 960px; margin: 0 auto; padding: 20px; }
   .card {
@@ -51,7 +59,7 @@
     background: var(--brand); color: #fff; border: 0; border-radius: 8px;
     padding: 10px 18px; font-size: 14px; cursor: pointer; margin-top: 12px;
   }
-  button:hover { background: #1d4ed8; }
+  button:hover { background: #0c5a45; }
   button:disabled { background: #9ca3af; cursor: not-allowed; }
   button.ghost { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
   .tabs { display: flex; gap: 8px; margin-bottom: 0; }
@@ -87,10 +95,14 @@
 </style>
 </head>
 <body>
+<div class="topband"></div>
 <header>
-  <h1>AI 简历优化 + 模拟面试</h1>
-  <p>纯前端作品 · 直连大模型 API · 你的 Key 只存在本机浏览器</p>
-  <span class="badge">当前模型：glm-4.7-flash（智谱 · 永久免费）</span>
+  <a class="back" href="https://tiancai-19.github.io/liuwenjia-ai-portfolio/">← 返回作品集主页</a>
+  <div class="head-center">
+    <h1>AI 简历优化 + 模拟面试</h1>
+    <p>纯前端作品 · 直连大模型 API · 你的 Key 只存在本机浏览器</p>
+    <span class="badge">当前模型：glm-4.7-flash（智谱 · 永久免费）</span>
+  </div>
 </header>
 
 <div class="wrap">
@@ -171,7 +183,8 @@
   </div>
 
   <div class="foot">
-    作品 1 / 刘文佳 · 模型调用由智谱开放平台提供 · 本页为纯静态前端，无任何后端收集你的数据
+    <a href="https://tiancai-19.github.io/liuwenjia-ai-portfolio/" style="color:var(--brand);text-decoration:none;">← 返回作品集主页</a>
+    <div style="margin-top:8px">作品 1 / 刘文佳 · 模型调用由智谱开放平台提供 · 本页为纯静态前端，无任何后端收集你的数据</div>
   </div>
 </div>
 
