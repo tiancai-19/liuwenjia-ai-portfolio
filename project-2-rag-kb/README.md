@@ -1,4 +1,4 @@
-> 状态：🟢 本地已跑通（待部署 Streamlit Community Cloud 拿公开链接） ｜ 对应方向：AI 应用开发 / 智能体 / RAG 知识库
+> 状态：🟢 已上线（公开演示：https://liuwenjia-rag.streamlit.app）｜ 对应方向：AI 应用开发 / 智能体 / RAG 知识库
 
 # ② 企业知识库问答系统（RAG）
 

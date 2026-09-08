@@ -8,11 +8,21 @@ import os
 import streamlit as st
 
 # rag_core 顶部会关闭 Chroma 遥测，需在其 import 前设置页面
-st.set_page_config(page_title="企业知识库问答 · RAG Demo", layout="wide")
+st.set_page_config(page_title="企业知识库问答系统", layout="wide")
 
 from rag_core import build_index, query, CHROMA_PATH, GEN_MODEL, EMBED_MODEL
 
-st.title("📚 企业知识库问答系统")
+st.markdown(
+    """<style>
+    .stApp a{color:#0F6E56;}
+    .stButton>button{background-color:#0F6E56;border-color:#0F6E56;color:#fff;}
+    .stButton>button:hover{background-color:#0c5a45;border-color:#0c5a45;}
+    </style>""",
+    unsafe_allow_html=True,
+)
+st.markdown("[← 返回作品集主页](https://tiancai-19.github.io/liuwenjia-ai-portfolio/)", unsafe_allow_html=True)
+
+st.title("企业知识库问答系统")
 st.caption(
     f"向量化：智谱 {EMBED_MODEL} ｜ 生成：智谱 {GEN_MODEL} ｜ 向量库：Chroma（本地）\n"
     "API Key 仅用于调用智谱，不落库、不对外暴露。"
@@ -70,3 +80,11 @@ if q:
                     st.markdown(f"**[{i}]** {r}")
         except Exception as e:
             st.error(f"调用出错：{e}")
+
+st.markdown(
+    "<div style='margin-top:32px;padding-top:16px;border-top:1px solid #e3e2dd;"
+    "text-align:center;color:#6b6a65;font-size:13px;'>"
+    "<a href='https://tiancai-19.github.io/liuwenjia-ai-portfolio/' style='color:#0F6E56;"
+    "text-decoration:none;'>← 返回作品集主页</a></div>",
+    unsafe_allow_html=True,
+)
