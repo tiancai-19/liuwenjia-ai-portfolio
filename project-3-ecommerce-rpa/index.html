@@ -8,7 +8,20 @@
   :root{
     --bg:#ffffff; --surface:#f7f7f5; --line:#e3e2dd; --text:#1f1f1d;
     --muted:#6b6a65; --accent:#185FA5; --ok:#3B6D11; --err:#B4231A;
+    --warn:#B45309; --warn-bg:#FEF3C7; --warn-border:#FCD34D;
   }
+  .banner-warn{
+    background:var(--warn-bg); border:1px solid var(--warn-border); border-left:4px solid var(--warn);
+    color:#78350F; padding:12px 44px 12px 14px; border-radius:8px; margin:0 0 18px;
+    font-size:13px; line-height:1.65; position:relative;
+  }
+  .banner-warn b{color:var(--warn);}
+  .banner-warn .x{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    background:transparent; border:0; color:#92400E; cursor:pointer;
+    font-size:22px; line-height:1; padding:4px 10px; border-radius:6px;
+    font-family:inherit;}
+  .banner-warn .x:hover{background:#FDE68A;}
+  .banner-warn.hidden{display:none;}
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);
     font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
@@ -69,19 +82,29 @@
 </div>
 
 <h1>电商图文 AIGC 工作台</h1>
-<p class="sub">输入商品信息 → AI 生成多版标题/卖点文案 → AI 生成主图 → 收藏成模板复用。纯前端，直连智谱大模型。</p>
+<div class="banner-warn" id="rateLimitBanner">
+  <div>⚠️ <b>免费档限速提示</b>：本工具使用智谱 GLM-4.7-Flash / CogView-3-Flash 免费接口，约 1 次/秒。
+    连点或一次性跑 5+ 商品可能触发 429。代码已做 3 次自动重试（间隔 2.5/4.5/7 秒），大多数情况用户无感；<b>建议手动间隔 3-5 秒</b>触发更稳。</div>
+  <button class="x" id="rateLimitClose" title="知道了，不再提醒" aria-label="关闭">×</button>
+</div>
+<p class="sub">单个商品：填信息 → AI 生成多版标题 / 卖点 → AI 生成主图 → 收藏成模板复用。整店上新：上传 Excel 一键批量生成图文。纯前端单文件，开箱即用。</p>
+
+<div class="note" style="margin-bottom:16px">
+  <b>使用步骤</b>：① 顶部填智谱 Key 并保存 → ② 填商品信息（或点「一键填充示例」）→ ③ 生成文案 → ④ 生成主图 → ⑤ 收藏到模板库。<br>
+  <b>批量处理</b>：直接跳到 ⑤，上传 Excel 一次生成多个商品，结果可一键收藏或导出表格。
+</div>
 
 <div class="card">
   <h2 style="margin-top:4px">① 商品信息</h2>
   <div class="row">
-    <div><label>商品名称</label><input type="text" id="pName" placeholder="如：北欧风陶瓷马克杯"></div>
-    <div><label>类目</label><input type="text" id="pCat" placeholder="如：家居/餐具"></div>
+    <div><label>商品名称</label><input type="text" id="pName" placeholder="如：全屋定制衣柜"></div>
+    <div><label>类目</label><input type="text" id="pCat" placeholder="如：家居/定制家具"></div>
   </div>
   <label>核心卖点（用逗号分隔）</label>
-  <textarea id="pPoints" placeholder="如：大容量, 微波炉可用, ins 风, 送礼好看"></textarea>
+  <textarea id="pPoints" placeholder="如：多层实木, 环保E0级, 免费上门量尺, 10年质保"></textarea>
   <button id="btnCopy">一键填充示例</button>
   <button id="btnGen" style="margin-left:8px">生成文案</button>
-  <div class="note">文案由智谱 GLM-4.7-Flash 生成，免费档约 1 次/秒，连点会提示稍后重试。</div>
+  <div class="note">限速会自动重试 3 次（间隔 2.5 / 4.5 / 7 秒），多数情况无需操作；如仍报错请刷新页面或换 Key。</div>
   <div class="out" id="copyOut" style="display:none"></div>
 </div>
 
@@ -124,7 +147,7 @@
   <h2 style="margin-top:4px">⑤ 批量模式（Excel 导入）</h2>
   <div class="note">
     上传 xlsx（列名 <code>name / cat / points</code>，大小写不限），循环生成文案，可选生成主图。
-    智谱免费档约 1 次/秒；<b>仅文案</b>每行 ~2 秒，<b>含主图</b>每行 ~15-30 秒。
+    <b>仅文案</b>每行 ~2 秒，<b>含主图</b>每行 ~15-30 秒。撞 429 会自动重试 3 次，最长等 ~14 秒。
     随时可点「取消」中断，已生成的保留。
     <a href="#" id="dlTpl" style="margin-left:8px">📥 下载模板</a>
   </div>
@@ -146,6 +169,10 @@
 
 <div class="note">
   进阶方向（本 Demo 未做，可在面试中展开）：① 模板落 MySQL / 后端实现多人共享与权限管理。
+</div>
+
+<div class="note" style="text-align:center;margin-top:28px">
+  电商图文 AIGC 工作台 · 作品集项目 3 子工具①
 </div>
 
 </div>
@@ -173,6 +200,16 @@ document.getElementById('retrySheetjs').addEventListener('click', (e)=>{
   s.onload=sheetjsOk; s.onerror=sheetjsErr;
   document.head.appendChild(s);
 });
+
+// 限速 banner：每次刷新都显示（使用说明不是通知，用熟了也该看到）
+// × 只关闭当前这一次，不写 localStorage——之前记忆式关闭导致用户误以为"自动消失"
+(function(){
+  const banner = document.getElementById('rateLimitBanner');
+  const btn = document.getElementById('rateLimitClose');
+  if(!banner || !btn) return;
+  try{ localStorage.removeItem('rateLimitDismissed'); }catch(e){} // 清掉历史残留
+  btn.addEventListener('click', ()=>{ banner.classList.add('hidden'); });
+})();
 const CHAT_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const IMAGE_URL = 'https://open.bigmodel.cn/api/paas/v4/images/generations';
 const TEXT_MODEL = 'glm-4.7-flash';
@@ -191,29 +228,58 @@ document.getElementById('btnSave').addEventListener('click', saveKey);
 loadKey();
 
 // ---- 通用请求 ----
-async function callChat(system, user){
+async function callChat(system, user, signal){
+  if(signal && signal.aborted) throw new Error('已取消');
   const key = getKey();
-  const resp = await fetch(CHAT_URL, {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+key },
-    body: JSON.stringify({
-      model: TEXT_MODEL,
-      messages:[ {role:'system',content:system}, {role:'user',content:user} ],
-      temperature:0.8
-    })
-  });
-  if(resp.status===401) throw new Error('Key 错误或未授权（401），请检查智谱控制台密钥');
-  if(resp.status===429) throw new Error('免费档限速（429），请稍等几秒再试');
-  if(!resp.ok) { const t = await resp.text(); throw new Error('调用失败 '+resp.status+'：'+t.slice(0,200)); }
-  const data = await resp.json();
-  return data.choices[0].message.content;
+  try{
+    const resp = await fetch(CHAT_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+key },
+      body: JSON.stringify({
+        model: TEXT_MODEL,
+        messages:[ {role:'system',content:system}, {role:'user',content:user} ],
+        temperature:0.8
+      }),
+      signal
+    });
+    if(resp.status===401) throw new Error('Key 错误或未授权（401），请检查智谱控制台密钥');
+    if(resp.status===429) throw new Error('免费档限速（429），请稍等几秒再试');
+    if(!resp.ok) { const t = await resp.text(); throw new Error('调用失败 '+resp.status+'：'+t.slice(0,200)); }
+    const data = await resp.json();
+    return data.choices[0].message.content;
+  }catch(e){
+    if(e.name === 'AbortError') throw new Error('已取消');
+    throw e;
+  }
+}
+
+// 429 自动重试：智谱免费档限速触发后需要 2-3 秒冷却，sleep(1100) 避不开
+// 最多重试 3 次，间隔递增（2.5s/4.5s/7s），onRetry 显示"重试 N/3"
+async function callChatWithRetry(system, user, signal, onRetry){
+  const waits = [2500, 4500, 7000];
+  let attempt = 0;
+  while(true){
+    if(signal && signal.aborted) throw new Error('已取消');
+    try{
+      return await callChat(system, user, signal);
+    }catch(e){
+      const is429 = e.message && e.message.includes('429');
+      if(!is429 || attempt >= waits.length){
+        if(signal && signal.aborted) throw new Error('已取消');
+        throw e;
+      }
+      if(onRetry) onRetry(attempt+1, waits[attempt]);
+      await sleep(waits[attempt]);
+      attempt++;
+    }
+  }
 }
 
 // ---- 示例 ----
 document.getElementById('btnCopy').addEventListener('click', ()=>{
-  document.getElementById('pName').value = '北欧风陶瓷马克杯';
-  document.getElementById('pCat').value = '家居/餐具';
-  document.getElementById('pPoints').value = '大容量, 微波炉可用, ins风, 送礼好看';
+  document.getElementById('pName').value = '全屋定制衣柜';
+  document.getElementById('pCat').value = '家居/定制家具';
+  document.getElementById('pPoints').value = '多层实木, 环保E0级, 免费上门量尺, 10年质保';
 });
 
 // ---- 生成文案 ----
@@ -228,7 +294,9 @@ document.getElementById('btnGen').addEventListener('click', async ()=>{
     + 'JSON 结构：{"titles":[3个不同风格的标题],"sellingPoints":[3条卖点],"description":"一段60字内的商品详情","imagePrompt":"一段中文电商主图提示词，描述画面、角度、光线、材质"}';
   const user = `商品名称：${name}\n类目：${cat||'通用'}\n核心卖点：${points||'无'}\n请生成文案与一张主图的提示词。`;
   try{
-    const raw = await callChat(system, user);
+    const raw = await callChatWithRetry(system, user, null, (attempt, wait)=>{
+      out.className='out'; out.textContent=`触发免费档限速，${(wait/1000).toFixed(1)} 秒后自动重试（${attempt}/3）…`;
+    });
     const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
     renderResult(name, cat, json);
     out.className='out ok'; out.textContent='生成完成 ✅ 可点「收藏」存入模板库，或去下方生成主图。';
@@ -237,26 +305,34 @@ document.getElementById('btnGen').addEventListener('click', async ()=>{
   }
 });
 
+let lastResult = null;
 function renderResult(name, cat, json){
   const area = document.getElementById('resultArea');
   const titles = (json.titles||[]).map((t,i)=>`<div class="item"><b>标题${i+1}：</b>${esc(t)}</div>`).join('');
   const pts = (json.sellingPoints||[]).map((t,i)=>`<div class="item"><b>卖点${i+1}：</b>${esc(t)}</div>`).join('');
+  lastResult = { name, cat, titles:json.titles||[], sellingPoints:json.sellingPoints||[], description:json.description||'', imagePrompt:json.imagePrompt||'' };
   area.innerHTML = `
     ${titles}
     ${pts}
     <div class="item"><b>详情：</b>${esc(json.description||'')}</div>
     <div class="item"><b>主图提示词：</b>${esc(json.imagePrompt||'')}</div>
-    <button id="btnFav">收藏到模板库</button>`;
-  document.getElementById('btnFav').addEventListener('click', ()=>{
-    saveTemplate({ name, cat, titles:json.titles||[], sellingPoints:json.sellingPoints||[], description:json.description||'', imagePrompt:json.imagePrompt||'' });
+    <button id="btnFav">收藏到模板库</button>
+    <button class="ghost" id="btnCopyText" style="margin-left:8px">复制全部文案</button>`;
+  document.getElementById('btnFav').addEventListener('click', ()=>{ saveTemplate(lastResult); });
+  document.getElementById('btnCopyText').addEventListener('click', ()=>{
+    copyText(toPlainText(lastResult), '文案已复制，可直接粘贴到商品后台');
   });
 }
 
 // ---- 图像生成（共用，单/批量都调它） ----
-async function callImageGen(prompt){
+async function callImageGen(prompt, signal){
+  if(signal && signal.aborted) throw new Error('已取消');
   const key = getKey();
   const ctrl = new AbortController();
   const timer = setTimeout(()=>ctrl.abort(), 120000);
+  if(signal){
+    signal.addEventListener('abort', ()=>ctrl.abort(), {once:true});
+  }
   try{
     const resp = await fetch(IMAGE_URL, {
       method:'POST',
@@ -271,6 +347,9 @@ async function callImageGen(prompt){
     const url = data.data && data.data[0] && (data.data[0].url || data.data[0].b64_json);
     if(!url) throw new Error('未拿到图像地址：'+JSON.stringify(data).slice(0,200));
     return url;
+  }catch(e){
+    if(e.name === 'AbortError') throw new Error('已取消');
+    throw e;
   }finally{ clearTimeout(timer); }
 }
 
@@ -290,7 +369,12 @@ document.getElementById('btnImg').addEventListener('click', async ()=>{
   area.innerHTML = '<div class="note">主图生成中（可能 10–60 秒）…</div>';
   try{
     const url = await callImageGen(prompt);
-    area.innerHTML = `<img class="gen" src="${url}" alt="生成的主图"><div class="note">提示词：${esc(prompt)}</div>`;
+    const nm = (document.getElementById('pName').value.trim() || document.getElementById('imgTitle').value.trim() || '主图').replace(/[\\/:*?"<>|]/g,'');
+    area.innerHTML = `<img class="gen" src="${url}" alt="生成的主图">
+      <div class="note">提示词：${esc(prompt)}</div>
+      <button class="ghost" id="btnDlImg" style="padding:6px 12px;margin-top:8px">下载主图</button>
+      <div class="note" style="margin-top:6px">智谱返回的图片链接 30 天后失效，需要留存请及时下载。</div>`;
+    document.getElementById('btnDlImg').addEventListener('click', ()=> downloadImage(url, '主图_'+nm+'.png'));
   }catch(e){
     if(e.name==='AbortError'){ area.innerHTML='<div class="out err">生成超时（120秒），免费档可能排队慢，请重试或换时段。</div>'; }
     else area.innerHTML = `<div class="out err">出错：${esc(e.message)}</div>`;
@@ -312,10 +396,26 @@ function renderTpl(){
     <div class="item">
       <b>${esc(t.name||'未命名')}</b> <span class="pill">${esc(t.cat||'')}</span>
       <div style="font-size:13px;margin-top:4px">${esc((t.titles||[]).join(' / '))}</div>
-      <button class="ghost" data-del="${i}" style="padding:4px 10px;margin-top:6px">删除</button>
+      <div class="row-actions">
+        <button class="ghost" data-load="${i}">载入到①</button>
+        <button class="ghost" data-copy="${i}">复制文案</button>
+        <button class="ghost" data-del="${i}">删除</button>
+      </div>
     </div>`).join('');
   area.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{
     const list2 = getTpl(); list2.splice(+b.dataset.del,1); localStorage.setItem(LS_TPL, JSON.stringify(list2)); renderTpl();
+  }));
+  area.querySelectorAll('[data-load]').forEach(b=> b.addEventListener('click', ()=>{
+    const t = getTpl()[+b.dataset.load]; if(!t) return;
+    document.getElementById('pName').value = t.name||'';
+    document.getElementById('pCat').value = t.cat||'';
+    document.getElementById('pPoints').value = (t.sellingPoints||[]).join(', ');
+    document.getElementById('resultArea').innerHTML = '<span class="note">已把该模板载入到 ①，可直接点「生成文案」基于新内容重新生成。</span>';
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }));
+  area.querySelectorAll('[data-copy]').forEach(b=> b.addEventListener('click', ()=>{
+    const t = getTpl()[+b.dataset.copy]; if(!t) return;
+    copyText(toPlainText(t), `「${t.name||'模板'}」的文案已复制`);
   }));
 }
 document.getElementById('btnClear').addEventListener('click', ()=>{
@@ -328,26 +428,9 @@ function sheetjsAlert(){
   alert('SheetJS 还没就绪（页面顶部状态：' + (s?s.textContent:'未知') + '）。等几秒再点，或点「点此重试」。');
 }
 document.getElementById('btnExportTpl').addEventListener('click', ()=>{
-  if(typeof XLSX==='undefined'){ sheetjsAlert(); return; }
   const list = getTpl();
   if(!list.length){ alert('模板库还是空的，先生成并收藏几个商品'); return; }
-  const rows = list.map(t=>{
-    const ti = t.titles||[], pt = t.sellingPoints||[];
-    return {
-      'name': t.name||'', 'cat': t.cat||'',
-      'title1': ti[0]||'', 'title2': ti[1]||'', 'title3': ti[2]||'',
-      'point1': pt[0]||'', 'point2': pt[1]||'', 'point3': pt[2]||'',
-      'description': t.description||'',
-      'imagePrompt': t.imagePrompt||'',
-      'savedAt': t.savedAt||''
-    };
-  });
-  const ws2 = XLSX.utils.json_to_sheet(rows);
-  const wb2 = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb2, ws2, '模板库');
-  const d = new Date();
-  const stamp = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  XLSX.writeFile(wb2, '模板库导出_'+stamp+'.xlsx');
+  exportRows(list.map(tplToRow), '模板库', '模板库导出');
 });
 
 // 导入 xlsx 回灌模板库
@@ -457,6 +540,7 @@ function renderBatchPreview(){
   html += '</div>';
   results.innerHTML = html;
   results.querySelectorAll('.batch-item').forEach(div=>{
+  const oldSum = document.getElementById('batchSummary'); if(oldSum) oldSum.remove();
     const i = +div.dataset.i;
     div.querySelector('.b-sel').addEventListener('change', (e)=>{ batchItems[i].selected = e.target.checked; renderBatchCount(); });
     div.querySelector('.b-name').addEventListener('input', (e)=>{ batchItems[i].name = e.target.value.trim(); renderBatchCount(); });
@@ -466,85 +550,266 @@ function renderBatchPreview(){
 }
 
 // 批量生成
+let batchAbort = null;
 document.getElementById('btnBatch').addEventListener('click', runBatch);
-document.getElementById('btnBatchCancel').addEventListener('click', ()=>{ batchCancel = true; });
+document.getElementById('btnBatchCancel').addEventListener('click', ()=>{
+  batchCancel = true;
+  document.getElementById('btnBatchCancel').textContent='正在取消…';
+  if(batchAbort) batchAbort.abort();
+});
+
+// 单条提示（统一 class，重试时可整体清掉）
+function showBatchMsg(div, text, cls){
+  const d = document.createElement('div');
+  d.className = 'b-result note' + (cls ? ' '+cls : '');
+  d.textContent = text;
+  div.appendChild(d);
+  return d;
+}
+
+// 生成单条商品：返回 'ok' | 'err' | 'cancelled'
+async function runOne(it, div, withImg, signal){
+  div.classList.remove('ok','err');
+  div.querySelectorAll('.b-result,.row-actions').forEach(n=>n.remove());
+  const user = `商品名称：${it.name}\n类目：${it.cat||'通用'}\n核心卖点：${it.points||'无'}\n请生成文案与一张主图的提示词。`;
+  try{
+    const raw = await callChatWithRetry(SYS_BATCH, user, signal, (attempt, wait)=>{
+      showBatchMsg(div, `触发免费档限速，${(wait/1000).toFixed(1)} 秒后自动重试（${attempt}/3）…`, '');
+    });
+    const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    it.json = json; it.err = '';
+    const titles = (json.titles||[]).map(t=>`<div>• ${esc(t)}</div>`).join('');
+    const pts = (json.sellingPoints||[]).map(t=>`<div>• ${esc(t)}</div>`).join('');
+    const result = document.createElement('div'); result.className='b-result';
+    result.style.cssText='margin-top:6px;font-size:13px;border-top:1px dashed var(--line);padding-top:6px';
+    result.innerHTML = `<b>文案：</b>${titles}${pts}<div>详情：${esc(json.description||'')}</div><div>主图提示词：${esc(json.imagePrompt||'')}</div>`;
+    div.appendChild(result);
+    if(withImg && json.imagePrompt){
+      await sleep(1100);
+      if(signal && signal.aborted) throw new Error('已取消');
+      try{
+        it.imgUrl = await callImageGen(json.imagePrompt, signal);
+        const img = document.createElement('div'); img.className='b-result batch-img';
+        img.innerHTML = `<img src="${it.imgUrl}" alt="主图" style="max-width:200px;border-radius:6px;border:1px solid var(--line);margin-top:6px">`;
+        div.appendChild(img);
+      }catch(eimg){
+        if(eimg.message==='已取消') throw eimg;
+        showBatchMsg(div, '主图失败：'+(eimg.message||String(eimg)), 'err');
+      }
+    }
+    const actions = document.createElement('div'); actions.className='row-actions';
+    const fav = document.createElement('button'); fav.textContent='收藏到模板库';
+    fav.onclick = ()=> saveTemplate({name:it.name, cat:it.cat, titles:json.titles||[], sellingPoints:json.sellingPoints||[], description:json.description||'', imagePrompt:json.imagePrompt||''});
+    actions.appendChild(fav);
+    const cp = document.createElement('button'); cp.className='ghost'; cp.textContent='复制文案';
+    cp.onclick = ()=> copyText(toPlainText({titles:json.titles||[], sellingPoints:json.sellingPoints||[], description:json.description||'', imagePrompt:json.imagePrompt||''}), `「${it.name}」的文案已复制`);
+    actions.appendChild(cp);
+    if(it.imgUrl){
+      const dl = document.createElement('button'); dl.className='ghost'; dl.textContent='下载主图';
+      dl.onclick = ()=> downloadImage(it.imgUrl, '主图_'+it.name.replace(/[\\/:*?"<>|]/g,'')+'.png');
+      actions.appendChild(dl);
+    }
+    div.appendChild(actions);
+    div.classList.add('ok');
+    it.status = 'ok';
+    return 'ok';
+  }catch(e){
+    if(e.message==='已取消'){
+      div.classList.add('err');
+      showBatchMsg(div, '已取消', 'err');
+      it.status = 'cancelled';
+      return 'cancelled';
+    }
+    div.classList.add('err');
+    it.status = 'err';
+    it.err = e.message || String(e);
+    const box = showBatchMsg(div, '出错：'+it.err, 'err');
+    const retry = document.createElement('button');
+    retry.className='ghost'; retry.textContent='重试这条'; retry.style.marginTop='6px';
+    retry.onclick = async ()=>{
+      retry.disabled = true; retry.textContent='重试中…';
+      await runOne(it, div, document.getElementById('batchWithImg').checked, null);
+      renderBatchSummary();
+    };
+    box.appendChild(retry);
+    return 'err';
+  }
+}
+
+// 批量结果汇总按钮：收藏全部 / 导出 / 继续生成剩余 / 重试失败项
+function renderBatchSummary(){
+  const results = document.getElementById('batchResults');
+  const old = document.getElementById('batchSummary'); if(old) old.remove();
+  const okList = batchItems.filter(x=>x.status==='ok');
+  const failList = batchItems.filter(x=>x.selected && x.name && (x.status==='err' || x.status==='cancelled'));
+  const pendingList = batchItems.filter(x=>x.selected && x.name && (!x.status || x.status==='pending'));
+  if(!okList.length && !failList.length && !pendingList.length) return;
+  const toTpl = x=> ({name:x.name, cat:x.cat, titles:x.json.titles||[], sellingPoints:x.json.sellingPoints||[], description:x.json.description||'', imagePrompt:x.json.imagePrompt||''});
+  const box = document.createElement('div');
+  box.id='batchSummary'; box.className='row-actions'; box.style.marginTop='12px';
+  if(okList.length){
+    const all = document.createElement('button'); all.textContent=`把 ${okList.length} 个成功项全部收藏到模板库`; all.style.marginTop='0';
+    all.onclick = ()=>{ okList.forEach(x=> saveTemplate(toTpl(x))); alert(`已收藏 ${okList.length} 个商品到模板库`); };
+    box.appendChild(all);
+    const exp = document.createElement('button'); exp.className='ghost'; exp.textContent=`导出本批 ${okList.length} 条结果为 Excel`; exp.style.marginTop='0';
+    exp.onclick = ()=> exportRows(okList.map(x=> tplToRow(Object.assign({savedAt:new Date().toLocaleString()}, toTpl(x)))), '批量结果', '批量生成结果');
+    box.appendChild(exp);
+  }
+  if(failList.length){
+    const rb = document.createElement('button'); rb.className='ghost'; rb.textContent=`重试 ${failList.length} 条失败项`; rb.style.marginTop='0';
+    rb.onclick = async ()=>{
+      rb.disabled = true; rb.textContent='重试中…';
+      const withImg = document.getElementById('batchWithImg').checked;
+      for(const it of failList){
+        const div = results.querySelector(`.batch-item[data-i="${it.idx}"]`);
+        if(!div) continue;
+        await runOne(it, div, withImg, null);
+        await sleep(1200);
+      }
+      renderBatchSummary();
+    };
+    box.appendChild(rb);
+  }
+  if(pendingList.length){
+    const pb = document.createElement('button'); pb.style.marginTop='0';
+    pb.textContent=`继续生成剩余 ${pendingList.length} 条（已生成的会保留）`;
+    pb.onclick = ()=> runBatch();
+    box.appendChild(pb);
+  }
+  // 重置：清掉所有 status 和显示
+  const reset = document.createElement('button'); reset.className='ghost'; reset.style.marginTop='0';
+  reset.textContent='清空批量结果';
+  reset.onclick = ()=>{
+    if(!confirm('清空本批所有结果（包括已成功项）？此操作不可撤销。')) return;
+    batchItems.forEach(x=>{ x.status=''; x.json=null; x.imgUrl=''; x.err=''; });
+    results.querySelectorAll('.batch-item').forEach(d=>{
+      d.classList.remove('ok','err');
+      d.querySelectorAll('.b-result,.row-actions').forEach(n=>n.remove());
+    });
+    renderBatchSummary();
+  };
+  box.appendChild(reset);
+  results.appendChild(box);
+}
 
 async function runBatch(){
   const withImg = document.getElementById('batchWithImg').checked;
-  const list = batchItems.filter(x=>x.selected && x.name);
-  if(!list.length){ alert('请至少勾选一个有商品名称的行'); return; }
+  // 只跑「选中的 + 有名字 + 未成功」的；已成功的保留，不会被重跑或清掉
+  batchList = batchItems.filter(x=>x.selected && x.name && x.status !== 'ok');
+  if(!batchList.length){
+    // 全部已成功或没有可生成的项
+    const allDone = batchItems.filter(x=>x.selected && x.name && x.status==='ok').length;
+    if(allDone) alert(`本批 ${allDone} 条已生成过，无需重跑；如要重置请点「清空批量结果」`);
+    else alert('请至少勾选一个有商品名称的行');
+    return;
+  }
   const startBtn = document.getElementById('btnBatch');
   const cancelBtn = document.getElementById('btnBatchCancel');
   const prog = document.getElementById('batchProgress');
   const progText = document.getElementById('batchProgressText');
   const bar = document.getElementById('batchBar');
-  startBtn.disabled = true; cancelBtn.style.display='inline-block'; prog.style.display='block';
-  batchCancel = false; cancelBtn.textContent='取消';
+  startBtn.disabled = true; cancelBtn.style.display='inline-block'; cancelBtn.textContent='取消'; prog.style.display='block';
+  batchCancel = false;
+  batchAbort = new AbortController();
   const results = document.getElementById('batchResults');
-  // 清掉上次生成留下的文案/图/按钮
-  results.querySelectorAll('.batch-item').forEach(d=>{ d.classList.remove('ok','err'); d.querySelectorAll('.b-result,.row-actions').forEach(n=>n.remove()); });
-  for(let i=0;i<list.length;i++){
+  // 只清理上次未成功（pending/err/cancelled）的条目；已成功的保留
+  results.querySelectorAll('.batch-item').forEach(d=>{
+    const idx = +d.dataset.i;
+    const it = batchItems.find(b=>b.idx===idx);
+    if(!it || it.status !== 'ok'){
+      d.classList.remove('ok','err');
+      d.querySelectorAll('.b-result,.row-actions').forEach(n=>n.remove());
+    }
+  });
+  for(let i=0;i<batchList.length;i++){
     if(batchCancel) break;
-    const it = list[i];
+    const it = batchList[i];
     const div = results.querySelector(`.batch-item[data-i="${it.idx}"]`);
     if(!div) continue;
-    progText.textContent = `进度 ${i+1}/${list.length}：${it.name}${withImg?'（含主图）':''}`;
-    bar.style.width = (i/list.length*100).toFixed(1)+'%';
-    try{
-      const user = `商品名称：${it.name}\n类目：${it.cat||'通用'}\n核心卖点：${it.points||'无'}\n请生成文案与一张主图的提示词。`;
-      const raw = await callChat(SYS_BATCH, user);
-      const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
-      it.json = json;
-      const titles = (json.titles||[]).map(t=>`<div>• ${esc(t)}</div>`).join('');
-      const pts = (json.sellingPoints||[]).map(t=>`<div>• ${esc(t)}</div>`).join('');
-      const result = document.createElement('div'); result.className='b-result';
-      result.style.cssText='margin-top:6px;font-size:13px;border-top:1px dashed var(--line);padding-top:6px';
-      result.innerHTML = `<b>文案：</b>${titles}${pts}<div>详情：${esc(json.description||'')}</div><div>主图提示词：${esc(json.imagePrompt||'')}</div>`;
-      div.appendChild(result);
-      if(withImg && json.imagePrompt){
-        await sleep(1100);
-        if(batchCancel) throw new Error('已取消');
-        try{
-          it.imgUrl = await callImageGen(json.imagePrompt);
-          const img = document.createElement('div'); img.className='b-result batch-img';
-          img.innerHTML = `<img src="${it.imgUrl}" alt="主图" style="max-width:200px;border-radius:6px;border:1px solid var(--line);margin-top:6px">`;
-          div.appendChild(img);
-        }catch(eimg){
-          const eDiv = document.createElement('div'); eDiv.className='b-result note err';
-          eDiv.textContent = '主图失败：'+(eimg.message||String(eimg));
-          div.appendChild(eDiv);
-        }
-      }
-      const actions = document.createElement('div'); actions.className='row-actions';
-      const fav = document.createElement('button'); fav.textContent='收藏到模板库';
-      fav.onclick = ()=> saveTemplate({name:it.name, cat:it.cat, titles:json.titles||[], sellingPoints:json.sellingPoints||[], description:json.description||'', imagePrompt:json.imagePrompt||''});
-      actions.appendChild(fav);
-      div.appendChild(actions);
-      div.classList.add('ok');
-    }catch(e){
-      div.classList.add('err');
-      const msg = document.createElement('div'); msg.className='b-result note err';
-      msg.textContent = '出错：'+(e.message||String(e));
-      div.appendChild(msg);
-    }
+    const okSoFar = batchItems.filter(x=>x.status==='ok').length;
+    progText.textContent = `进度：正在生成「${it.name}」${withImg?'（含主图）':''}  ·  本批已完成 ${okSoFar}/${batchItems.filter(x=>x.selected && x.name).length}`;
+    bar.style.width = (i/batchList.length*100).toFixed(1)+'%';
+    const r = await runOne(it, div, withImg, batchAbort.signal);
+    if(r === 'cancelled' || batchCancel) break;
     await sleep(1100); // 限速，避免 429
   }
+  batchAbort = null;
   bar.style.width = '100%';
-  const done = list.filter(x=>x.json).length;
-  progText.textContent = batchCancel? `已取消：完成 ${done}/${list.length}` : `全部完成：${done}/${list.length}`;
-  startBtn.disabled = false; cancelBtn.style.display='none';
-  if(!batchCancel && done){
-    const all = document.createElement('button'); all.textContent=`把 ${done} 个成功项全部收藏到模板库`; all.style.marginTop='12px';
-    all.onclick = ()=>{
-      list.filter(x=>x.json).forEach(x=> saveTemplate({name:x.name, cat:x.cat, titles:x.json.titles||[], sellingPoints:x.json.sellingPoints||[], description:x.json.description||'', imagePrompt:x.json.imagePrompt||''}));
-      alert(`已收藏 ${done} 个商品到模板库`);
-    };
-    results.appendChild(all);
+  const pending = batchItems.filter(x=>x.selected && x.name && x.status !== 'ok');
+  const totalSelected = batchItems.filter(x=>x.selected && x.name).length;
+  const doneNow = batchItems.filter(x=>x.status==='ok').length;
+  if(batchCancel){
+    progText.textContent = `已取消：本批已完成 ${doneNow}/${totalSelected}` + (pending.length? `，剩 ${pending.length} 条未生成` : '');
+  }else{
+    progText.textContent = `本批生成完成：${doneNow}/${totalSelected}` + (pending.length? `，剩 ${pending.length} 条未生成` : '');
   }
+  startBtn.disabled = false; cancelBtn.style.display='none';
+  renderBatchSummary();
 }
 
 // ---- 工具 ----
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// 复制文本（http/本地打开时 clipboard API 不可用，带兜底）
+function copyText(text, okMsg){
+  const done = ()=> alert(okMsg || '已复制到剪贴板');
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(()=> fallbackCopy(text, done));
+  }else{ fallbackCopy(text, done); }
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText='position:fixed;left:-9999px;top:0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); done(); }catch(e){ alert('复制失败，请手动选中复制'); }
+  ta.remove();
+}
+
+// 下载网络图片（跨域受限时兜底为新窗口打开，手动另存）
+async function downloadImage(url, filename){
+  try{
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const blob = await resp.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  }catch(e){ window.open(url, '_blank'); }
+}
+
+// 文案统一转纯文本（复制 / 导出共用）
+function toPlainText(o){
+  const L = [];
+  (o.titles||[]).forEach((t,i)=> L.push(`标题${i+1}：${t}`));
+  (o.sellingPoints||[]).forEach((t,i)=> L.push(`卖点${i+1}：${t}`));
+  L.push(`详情：${o.description||''}`);
+  if(o.imagePrompt) L.push(`主图提示词：${o.imagePrompt}`);
+  return L.join('\n');
+}
+
+// 导出任意行数组为 xlsx（模板库 / 批量结果共用）
+function exportRows(rows, sheetName, filePrefix){
+  if(typeof XLSX==='undefined'){ sheetjsAlert(); return; }
+  if(!rows.length){ alert('没有可导出的内容'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  const d = new Date();
+  const stamp = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, filePrefix+'_'+stamp+'.xlsx');
+}
+function tplToRow(t){
+  const ti = t.titles||[], pt = t.sellingPoints||[];
+  return {
+    'name': t.name||'', 'cat': t.cat||'',
+    'title1': ti[0]||'', 'title2': ti[1]||'', 'title3': ti[2]||'',
+    'point1': pt[0]||'', 'point2': pt[1]||'', 'point3': pt[2]||'',
+    'description': t.description||'',
+    'imagePrompt': t.imagePrompt||'',
+    'savedAt': t.savedAt||''
+  };
+}
 </script>
 </body>
 </html>
