@@ -46,6 +46,10 @@
   .item b{color:var(--accent);}
   img.gen{max-width:100%;border-radius:8px;border:1px solid var(--line);margin-top:8px;}
   .note{font-size:13px;color:var(--muted);background:var(--surface);border-radius:8px;padding:10px 12px;margin-top:8px;}
+  .note-empty{display:block;margin-top:6px;color:var(--muted);font-size:12px;font-style:italic;background:transparent;border:0;padding:0;}
+  details.note summary{cursor:pointer;user-select:none;color:var(--accent);width:fit-content;}
+  details.note summary:hover{text-decoration:underline;}
+  details.note[open] summary{margin-bottom:8px;}
   .err{color:var(--err);}
   .ok{color:var(--ok);}
   .keybar{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);
@@ -127,7 +131,7 @@
   </div>
   <button id="btnImg">生成主图</button>
   <div class="note">主图由智谱 CogView-3-Flash 生成（免费，每张 ¥0）。默认带 AI 水印，生产环境可在智谱控制台签署去水印声明后关闭。生成可能需 10–60 秒，请稍候。</div>
-  <div id="imgArea"><span class="note">生成文案后，点上方按钮即可出图。</span></div>
+  <div id="imgArea" class="note-empty">生成文案后，点上方按钮即可出图。</div>
 </div>
 
 <div class="card">
@@ -140,7 +144,7 @@
     <b>导出</b>：每行含商品名 / 类目 / 3 条标题 / 3 条卖点 / 详情 / 主图提示词，用于电商上新与运营交单。<br>
     <b>导入</b>：用于备份、换机迁移与批量更新模板库。
   </div>
-  <div id="tplArea"><span class="note">还没有收藏的模板。</span></div>
+  <div id="tplArea" class="note-empty">还没有收藏的模板。</div>
 </div>
 
 <div class="card">
@@ -167,9 +171,10 @@
   </div>
 </div>
 
-<div class="note">
-  进阶方向（本 Demo 未做，可在面试中展开）：① 模板落 MySQL / 后端实现多人共享与权限管理。
-</div>
+<details class="note">
+  <summary>进阶方向（点击展开）</summary>
+  <div>① 模板落 MySQL / 后端，实现多人共享与权限管理。</div>
+</details>
 
 <div class="note" style="text-align:center;margin-top:28px">
   电商图文 AIGC 工作台 · 作品集项目 3 子工具①
@@ -391,7 +396,7 @@ function saveTemplate(t){
 function renderTpl(){
   const area = document.getElementById('tplArea');
   const list = getTpl();
-  if(!list.length){ area.innerHTML='<span class="note">还没有收藏的模板。</span>'; return; }
+  if(!list.length){ area.innerHTML='<div class="note-empty">还没有收藏的模板。</div>'; return; }
   area.innerHTML = list.map((t,i)=>`
     <div class="item">
       <b>${esc(t.name||'未命名')}</b> <span class="pill">${esc(t.cat||'')}</span>
