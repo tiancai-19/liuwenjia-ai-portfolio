@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 简历优化 + 模拟面试 · 刘文佳作品集</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --ink: #1f2937;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --brand: #2563eb;
+    --brand-soft: #eff6ff;
+    --ok: #16a34a;
+    --warn: #d97706;
+    --err: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff; padding: 28px 20px; text-align: center;
+  }
+  header h1 { margin: 0 0 6px; font-size: 22px; }
+  header p { margin: 0; opacity: .9; font-size: 14px; }
+  .badge {
+    display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 999px;
+    background: rgba(255,255,255,.18); font-size: 12px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .card h2 { margin: 0 0 12px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  textarea, input[type=text], input[type=password] {
+    width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+    font-size: 14px; font-family: inherit; resize: vertical; background: #fff; color: var(--ink);
+  }
+  textarea { min-height: 140px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 220px; }
+  button {
+    background: var(--brand); color: #fff; border: 0; border-radius: 8px;
+    padding: 10px 18px; font-size: 14px; cursor: pointer; margin-top: 12px;
+  }
+  button:hover { background: #1d4ed8; }
+  button:disabled { background: #9ca3af; cursor: not-allowed; }
+  button.ghost { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 0; }
+  .tab {
+    flex: 1; text-align: center; padding: 12px; cursor: pointer; border-radius: 10px 10px 0 0;
+    background: #e9eef6; color: var(--muted); font-size: 14px; border: 1px solid var(--line); border-bottom: 0;
+  }
+  .tab.active { background: var(--card); color: var(--brand); font-weight: 600; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .out {
+    margin-top: 14px; padding: 14px; border-radius: 8px; background: var(--brand-soft);
+    border: 1px solid #dbeafe; white-space: pre-wrap; font-size: 14px; min-height: 40px;
+  }
+  .change-item {
+    padding: 10px 12px; margin-top: 8px; border-left: 3px solid var(--brand);
+    background: #f8fafc; border-radius: 0 8px 8px 0; font-size: 13px;
+  }
+  .change-item b { color: var(--brand); }
+  .q-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-top: 10px; }
+  .q-card .qn { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .fb-item { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+  .fb-item .score { font-weight: 700; }
+  .status { font-size: 13px; margin-top: 10px; }
+  .status.err { color: var(--err); }
+  .status.warn { color: var(--warn); }
+  .status.ok { color: var(--ok); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .keybar { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .keybar > div { flex: 1; min-width: 240px; }
+  a { color: var(--brand); }
+  .foot { text-align: center; font-size: 12px; color: var(--muted); padding: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>AI 简历优化 + 模拟面试</h1>
+  <p>纯前端作品 · 直连大模型 API · 你的 Key 只存在本机浏览器</p>
+  <span class="badge">当前模型：glm-4.7-flash（智谱 · 永久免费）</span>
+</header>
+
+<div class="wrap">
+
+  <!-- Key 设置 -->
+  <div class="card">
+    <h2><span class="dot"></span>第一步：填写你的智谱 API Key</h2>
+    <div class="keybar">
+      <div>
+        <label>API Key（密码显示，仅存本机浏览器，不上传任何服务器）</label>
+        <input type="password" id="apiKey" placeholder="粘贴你的 key，例如 key-xxxxxx" autocomplete="off">
+      </div>
+      <div>
+        <label>API 地址（默认官方；如遇 CORS 报错可填代理地址）</label>
+        <input type="text" id="apiBase" placeholder="https://open.bigmodel.cn/api/paas/v4">
+      </div>
+    </div>
+    <div class="row" style="margin-top:6px;">
+      <div>
+        <button class="ghost" id="saveKey" style="margin-top:0;">保存 Key</button>
+        <button class="ghost" id="clearKey" style="margin-top:0; color:var(--err); border-color:var(--err);">清除 Key</button>
+      </div>
+    </div>
+    <div class="status" id="keyStatus"></div>
+    <div class="hint">获取地址：登录 open.bigmodel.cn → 左侧「API 密钥」→ 新建并复制。Key 不会出现在页面明文，也不会进代码仓库。</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="opt">简历优化</div>
+    <div class="tab" data-tab="iv">模拟面试</div>
+  </div>
+
+  <!-- 简历优化 -->
+  <div class="panel active" id="panel-opt">
+    <div class="card">
+      <h2><span class="dot"></span>简历优化</h2>
+      <div class="row">
+        <div>
+          <label>目标岗位关键词（让优化更对口，可留空）</label>
+          <input type="text" id="optJd" placeholder="例：AI 应用开发 / 智能体开发 / RPA 自动化提效">
+        </div>
+      </div>
+      <label>原始简历（粘贴你的简历全文）</label>
+      <textarea id="resumeInput" placeholder="在此粘贴你的简历内容……"></textarea>
+      <button id="btnOpt">一键优化简历</button>
+      <div class="status" id="optStatus"></div>
+      <label>优化后的简历</label>
+      <div class="out" id="optResult">（等待生成）</div>
+      <label>逐条改动理由</label>
+      <div id="optChanges"></div>
+    </div>
+  </div>
+
+  <!-- 模拟面试 -->
+  <div class="panel" id="panel-iv">
+    <div class="card">
+      <h2><span class="dot"></span>模拟面试</h2>
+      <div class="row">
+        <div>
+          <label>目标岗位关键词（可留空）</label>
+          <input type="text" id="ivJd" placeholder="例：AI 应用开发">
+        </div>
+      </div>
+      <label>你的简历（用于出题与评分，可粘贴全文）</label>
+      <textarea id="ivResume" placeholder="在此粘贴你的简历内容……"></textarea>
+      <button id="btnGen">生成 5 道面试题</button>
+      <div class="status" id="ivGenStatus"></div>
+      <div id="ivQuestions"></div>
+      <div id="ivScoreWrap" style="display:none;">
+        <button id="btnScore">提交作答并评分</button>
+        <div class="status" id="ivScoreStatus"></div>
+        <label>评分与建议</label>
+        <div class="out" id="ivScore">（等待评分）</div>
+        <div id="ivFeedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    作品 1 / 刘文佳 · 模型调用由智谱开放平台提供 · 本页为纯静态前端，无任何后端收集你的数据
+  </div>
+</div>
+
+<script>
+const MODEL = "glm-4.7-flash";
+const DEFAULT_BASE = "https://open.bigmodel.cn/api/paas/v4";
+
+// ---- Key 管理 ----
+const $ = (id) => document.getElementById(id);
+function loadKey() {
+  $("apiKey").value = localStorage.getItem("zp_key") || "";
+  $("apiBase").value = localStorage.getItem("zp_base") || DEFAULT_BASE;
+}
+function saveKey() {
+  const k = $("apiKey").value.trim();
+  const b = $("apiBase").value.trim() || DEFAULT_BASE;
+  if (!k) { setStatus("keyStatus", "请先粘贴 Key 再保存", "err"); return; }
+  localStorage.setItem("zp_key", k);
+  localStorage.setItem("zp_base", b);
+  setStatus("keyStatus", "已保存到本机浏览器（仅本机可见）", "ok");
+}
+function clearKey() {
+  localStorage.removeItem("zp_key");
+  $("apiKey").value = "";
+  setStatus("keyStatus", "已清除本机 Key", "warn");
+}
+function getKey() { return localStorage.getItem("zp_key") || ""; }
+function getBase() { return localStorage.getItem("zp_base") || DEFAULT_BASE; }
+
+function setStatus(id, msg, type) {
+  const el = $(id);
+  el.textContent = msg;
+  el.className = "status" + (type ? " " + type : "");
+}
+
+// ---- 通用 API 调用 ----
+async function callAPI(messages, temperature) {
+  const key = getKey();
+  if (!key) throw new Error("请先在顶部填写并保存 API Key");
+  const base = getBase().replace(/\/$/, "");
+  let res;
+  try {
+    res = await fetch(base + "/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+      body: JSON.stringify({ model: MODEL, messages, temperature: temperature ?? 0.7, stream: false })
+    });
+  } catch (e) {
+    throw new Error("网络/CORS 错误：浏览器无法直接访问该接口。可在「API 地址」填入一个允许跨域的代理，或在本机用本地服务器打开本页。");
+  }
+  if (res.status === 401) throw new Error("API Key 无效或已失效，请检查后重新填写（控制台可 revoke 重发）");
+  if (res.status === 429) throw new Error("请求过于频繁（免费档限速约 1 次/秒），请等几秒再点");
+  if (!res.ok) throw new Error("接口返回错误：HTTP " + res.status + "，请稍后重试");
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+// 尝试解析 JSON，失败返回原文本
+function tryJSON(text) {
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    return m ? JSON.parse(m[0]) : null;
+  } catch { return null; }
+}
+
+// ---- 简历优化 ----
+$("btnOpt").addEventListener("click", async () => {
+  const resume = $("resumeInput").value.trim();
+  const jd = $("optJd").value.trim();
+  if (!resume) { setStatus("optStatus", "请先粘贴原始简历", "err"); return; }
+  $("btnOpt").disabled = true; setStatus("optStatus", "正在调用模型优化……（免费档约几秒）", "");
+  try {
+    const sys = "你是一位资深 HR 与简历优化顾问，擅长把应届生的简历改写成贴合 AI 应用开发 / 智能体开发 / RPA 自动化岗位的版本。" +
+      "请严格只返回一个 JSON 对象，格式：{\"optimized\":\"优化后的完整简历文本\",\"changes\":[{\"item\":\"改动点\",\"reason\":\"为什么这样改\"}]}。" +
+      "优化要点：突出 AI/自动化项目与技能、量化成果、去掉夸大词（如精通）、对齐目标岗位关键词。不要输出 JSON 以外的任何文字。";
+    const user = "目标岗位关键词：" + (jd || "AI 应用开发") + "\n\n原始简历：\n" + resume;
+    const out = await callAPI([
+      { role: "system", content: sys },
+      { role: "user", content: user }
+    ], 0.6);
+    const j = tryJSON(out);
+    if (j && j.optimized) {
+      $("optResult").textContent = j.optimized;
+      const box = $("optChanges"); box.innerHTML = "";
+      (j.changes || []).forEach(c => {
+        const d = document.createElement("div");
+        d.className = "change-item";
+        d.innerHTML = "<b>" + esc(c.item || "") + "</b><br>" + esc(c.reason || "");
+        box.appendChild(d);
+      });
+      setStatus("optStatus", "优化完成 ✅", "ok");
+    } else {
+      $("optResult").textContent = out;
+      $("optChanges").innerHTML = "";
+      setStatus("optStatus", "已生成（模型未返回标准格式，已原样显示）", "warn");
+    }
+  } catch (e) {
+    setStatus("optStatus", e.message, "err");
+  } finally {
+    $("btnOpt").disabled = false;
+  }
+});
+
+// ---- 模拟面试：生成题 ----
+let IV_QUESTIONS = [];
+$("btnGen").addEventListener("click", async () => {
+  const resume = $("ivResume").value.trim();
+  const jd = $("ivJd").value.trim();
+  if (!resume) { setStatus("ivGenStatus", "请先粘贴简历", "err"); return; }
+  $("btnGen").disabled = true; setStatus("ivGenStatus", "正在生成面试题……", "");
+  try {
+    const sys = "你是严格的面试官，针对 AI 应用开发 / 智能体开发岗位。请只返回一个 JSON：{\"questions\":[\"题1\",\"题2\",\"题3\",\"题4\",\"题5\"]}，" +
+      "5 道题需覆盖：自我介绍、项目经历、技术基础、对 AI/大模型的理解、职业规划。不要输出 JSON 以外的文字。";
+    const user = "候选人简历：\n" + resume + "\n目标岗位：" + (jd || "AI 应用开发");
+    const out = await callAPI([
+      { role: "system", content: sys },
+      { role: "user", content: user }
+    ], 0.8);
+    const j = tryJSON(out);
+    IV_QUESTIONS = (j && Array.isArray(j.questions)) ? j.questions : [];
+    if (!IV_QUESTIONS.length) throw new Error("生成结果异常，请重试");
+    const box = $("ivQuestions"); box.innerHTML = "";
+    IV_QUESTIONS.forEach((q, i) => {
+      const c = document.createElement("div");
+      c.className = "q-card";
+      c.innerHTML = '<div class="qn">Q' + (i + 1) + '：' + esc(q) + '</div>' +
+        '<textarea data-q="' + i + '" placeholder="在此作答……"></textarea>';
+      box.appendChild(c);
+    });
+    $("ivScoreWrap").style.display = "block";
+    setStatus("ivGenStatus", "已生成 5 道题，答完点下方评分 ✅", "ok");
+  } catch (e) {
+    setStatus("ivGenStatus", e.message, "err");
+  } finally {
+    $("btnGen").disabled = false;
+  }
+});
+
+// ---- 模拟面试：评分 ----
+$("btnScore").addEventListener("click", async () => {
+  const resume = $("ivResume").value.trim();
+  const answers = [...document.querySelectorAll("#ivQuestions textarea")].map(t => t.value.trim());
+  if (answers.some(a => !a)) { setStatus("ivScoreStatus", "请答完所有题目再提交", "err"); return; }
+  $("btnScore").disabled = true; setStatus("ivScoreStatus", "正在评分……", "");
+  try {
+    const qa = IV_QUESTIONS.map((q, i) => "Q" + (i + 1) + "：" + q + "\n作答：" + answers[i]).join("\n\n");
+    const sys = "你是面试官，请基于候选人简历与作答评分点评。只返回 JSON：{\"score\":分数(0-100),\"summary\":\"总体评价\",\"feedback\":[{\"question\":\"题面\",\"answer\":\"原作答\",\"comment\":\"点评与改进建议\"}]}。" +
+      "feedback 数组需与题目一一对应。不要输出 JSON 以外的文字。";
+    const user = "候选人简历：\n" + resume + "\n\n作答记录：\n" + qa;
+    const out = await callAPI([
+      { role: "system", content: sys },
+      { role: "user", content: user }
+    ], 0.4);
+    const j = tryJSON(out);
+    if (j && j.summary) {
+      $("ivScore").textContent = "综合得分：" + (j.score ?? "—") + "/100\n\n" + j.summary;
+      const box = $("ivFeedback"); box.innerHTML = "";
+      (j.feedback || []).forEach(f => {
+        const d = document.createElement("div");
+        d.className = "fb-item";
+        d.innerHTML = '<div class="score">题：' + esc(f.question || "") + '</div>' +
+          '<div style="font-size:13px;color:var(--muted)">你的作答：' + esc(f.answer || "") + '</div>' +
+          '<div style="margin-top:6px">建议：' + esc(f.comment || "") + '</div>';
+        box.appendChild(d);
+      });
+      setStatus("ivScoreStatus", "评分完成 ✅", "ok");
+    } else {
+      $("ivScore").textContent = out;
+      $("ivFeedback").innerHTML = "";
+      setStatus("ivScoreStatus", "已返回（模型未返回标准格式，已原样显示）", "warn");
+    }
+  } catch (e) {
+    setStatus("ivScoreStatus", e.message, "err");
+  } finally {
+    $("btnScore").disabled = false;
+  }
+});
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// ---- Tab 切换 ----
+document.querySelectorAll(".tab").forEach(t => {
+  t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    $("panel-" + t.dataset.tab).classList.add("active");
+  });
+});
+
+// ---- 保存/清除 ----
+$("saveKey").addEventListener("click", saveKey);
+$("clearKey").addEventListener("click", clearKey);
+
+loadKey();
+</script>
+</body>
+</html>
