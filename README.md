@@ -1,29 +1,40 @@
-# 刘文佳 · AI 应用开发作品集
+# 项目 1 · AI 简历优化 + 模拟面试系统
 
-> 2026 届软件技术大专应届生，主攻 **AI 应用开发 / 智能体 / 自动化提效**。
-> 以下为独立完成的三个可演示项目，代码与演示均见各子目录。
+> 状态：🟢 可演示 ｜ 对应方向：AI 应用开发 / 智能体 / 自动化提效
 
-## 项目索引
+## 1. 问题（Problem）
+投 AI 岗时不会写简历突出项目与成果，面试临场慌、从没真练过；身边没人帮改简历、没人模拟面。
 
-| 项目 | 简介 | 状态 | 详情 |
-|---|---|---|---|
-| 项目 1 · AI 简历优化 + 模拟面试 | 用大模型优化简历并模拟面试问答，标注改动理由 + 评分反馈 | 🟢 可演示 | [README](project-1-resume-ai/) |
-| 项目 2 · 企业知识库问答（RAG） | 文档上传 → 向量检索 → 大模型回答并标注原文引用 | ⚪ 规划中 | [README](project-2-rag-kb/) |
-| 项目 3 · 电商运营自动化工具集 | 商品图文 AIGC 工作台 + 订单对账 + 客服 bot | ⚪ 规划中 | [README](project-3-ecommerce-rpa/) |
+## 2. 方案（Action）
+做一个单页 Web 工具：
+- **简历优化**：粘贴简历 + 目标岗位 → 大模型按岗位重写，并逐条标注「为什么这么改」
+- **模拟面试**：基于简历 + 岗位生成 5 道题 → 逐题作答 → 大模型给综合评分 + 每题改进建议
 
-## 在线作品集主页
+## 3. 架构（Architecture）
+- 前端：纯 HTML / CSS / JavaScript（单文件，无构建、无框架）
+- 大模型 API：智谱 GLM-4.7-Flash（open.bigmodel.cn，永久免费、200K 上下文、OpenAI 兼容接口）
+- 调用方式：浏览器 `fetch` 直连智谱 OpenAI 兼容端点，无后端服务器
+- Key 安全：用户 Key 仅存浏览器 `localStorage`（密码掩码），不进仓库、不上传任何服务器
+- 部署：GitHub Pages（纯静态）
 
-已上线：https://tiancai-19.github.io/liuwenjia-ai-portfolio/
+## 4. 效果（Result）
+- 简历优化：输出「优化版 + 逐条改动理由」，可直接复制到求职简历
+- 模拟面试：覆盖自我介绍 / 项目经历 / 技术基础 / AI 理解 / 职业规划五类题型，输出 0-100 评分 + 逐题建议
+- 在线演示：https://tiancai-19.github.io/liuwenjia-ai-portfolio/project-1-resume-ai/
 
-## 关于我
+## 5. 踩坑（Lesson）
+- **Key 保护**：最初顾虑 Key 暴露在网页，最终采用「纯前端 + 浏览器本地存储 + 密码掩码」，别人访问公开页看不到 Key，只有能操作本机浏览器才可见——对免费求职项目足够安全
+- **免费档限速**：GLM-4.7-Flash 免费档约 1 并发/秒，代码对 429 做了「稍后重试」提示，避免连点崩溃
+- **模型输出格式**：要求模型返回 JSON（优化版+改动、题目列表、评分），解析失败时原样显示并提示，保证不白屏
+- **CORS 兜底**：若浏览器直连被拦，页面提供「API 地址」可填代理，降低部署门槛
 
-- 信阳艺术职业学院 · 软件技术 · 2026 届大专
-- 技术栈：Python / Java / MySQL / 前端 / 大模型 API / Coze·Dify / 影刀 RPA
-- 游戏行业 10000h+ 经验（模拟经营 / 消除），熟悉 IAA/IAP 变现与渠道生态
-- 证书：网络安全管理员三级/高级工、普通话二甲
+## 6. 运行（Run）
+```bash
+# 本地预览（推荐用本地服务器，避免 file:// 下的 CORS 限制）
+cd project-1-resume-ai
+python -m http.server 8000
+# 浏览器访问 http://localhost:8000
+```
+- 在线演示：https://tiancai-19.github.io/liuwenjia-ai-portfolio/project-1-resume-ai/
+- 使用：打开页面 → 顶部填智谱 API Key 并保存 → 选「简历优化」或「模拟面试」tab 使用
 
-## 联系方式
-
-- 邮箱：tiancai-19@users.noreply.github.com
-- GitHub：https://github.com/tiancai-19
-- 作品集主页：https://tiancai-19.github.io/liuwenjia-ai-portfolio/
