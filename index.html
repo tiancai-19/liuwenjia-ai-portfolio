@@ -7,19 +7,25 @@
 <style>
   :root{
     --bg:#ffffff; --surface:#f7f7f5; --line:#e3e2dd; --text:#1f1f1d;
-    --muted:#6b6a65; --accent:#185FA5; --ok:#3B6D11; --okbg:#EAF3DE;
-    --wait:#854F0B; --waitbg:#FAEEDA;
+    --muted:#6b6a65; --accent:#0F6E56; --accent-soft:#E1F5EE;
+    --ok:#3B6D11; --okbg:#EAF3DE;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);
     font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
     font-size:15px;line-height:1.7;}
-  .wrap{max-width:960px;margin:0 auto;padding:40px 24px 80px;}
-  header{border-bottom:2px solid var(--line);padding-bottom:24px;margin-bottom:32px;}
-  h1{font-size:26px;font-weight:700;margin:0 0 6px;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px 80px;}
+  header{padding:40px 0 24px;border-bottom:1px solid var(--line);margin-bottom:8px;}
+  h1{font-size:26px;font-weight:700;margin:0 0 8px;
+    display:flex;align-items:center;gap:10px;}
+  h1 .brandbar{width:4px;height:22px;background:var(--accent);border-radius:2px;display:inline-block;}
   .role{color:var(--accent);font-weight:600;font-size:15px;}
-  .lead{color:var(--muted);margin:10px 0 0;max-width:640px;}
-  h2{font-size:18px;font-weight:600;margin:40px 0 16px;
+  .lead{color:var(--muted);margin:10px 0 0;max-width:680px;}
+  .skills{display:flex;flex-wrap:wrap;gap:8px;padding:18px 0 4px;
+    border-bottom:1px solid var(--line);margin-bottom:32px;}
+  .skills span{font-size:12.5px;color:var(--text);background:var(--surface);
+    border:1px solid var(--line);border-radius:14px;padding:3px 12px;}
+  h2{font-size:18px;font-weight:600;margin:36px 0 16px;
     padding-bottom:8px;border-bottom:1px solid var(--line);}
   .about{background:var(--surface);border-radius:12px;padding:18px 20px;}
   .about ul{margin:8px 0;padding-left:20px;}
@@ -28,16 +34,17 @@
   .card{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg);
     display:flex;flex-direction:column;}
   .card h3{margin:0 0 8px;font-size:16px;}
-  .card p{margin:0 0 12px;color:var(--muted);font-size:13.5px;flex:1;}
+  .card .problem{margin:0 0 12px;color:var(--text);font-size:13.5px;flex:1;}
   .stack{font-size:12px;color:var(--text);background:var(--surface);
     border-radius:6px;padding:6px 8px;margin-bottom:12px;}
   .tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;}
   .t-dev{background:var(--okbg);color:var(--ok);}
-  .t-wait{background:var(--waitbg);color:var(--wait);}
   .links a{color:var(--accent);text-decoration:none;font-size:13px;margin-right:14px;}
   .links a:hover{text-decoration:underline;}
   .contact{padding-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;}
   .contact b{color:var(--text);}
+  .contact .row{display:flex;flex-wrap:wrap;gap:4px 28px;margin-top:8px;}
+  .contact .row div{margin:2px 0;}
   code{background:var(--surface);padding:1px 5px;border-radius:4px;font-size:12.5px;}
 </style>
 </head>
@@ -45,43 +52,49 @@
 <div class="wrap">
 
 <header>
-  <h1>刘文佳</h1>
-  <div class="role">AI 应用开发 / 智能体 / 自动化提效 · 2026 届大专应届</div>
-  <p class="lead">围绕 AI 应用落地，正在推进三个可演示项目：AI 简历优化（已完成）、企业知识库问答（RAG）、电商运营自动化。擅长把业务里的重复流程拆解成技术方案，并自己走通需求→开发→部署→效果评估。</p>
+  <h1><span class="brandbar"></span>刘文佳</h1>
+  <div class="role">2026 届软件技术 · 河南洛阳</div>
+  <p class="lead">关注 AI 应用落地，近期独立完成 3 个可在线演示的小工具：AI 简历优化、企业知识库问答（RAG）、电商图文 AIGC 生成。代码与部署均公开在 GitHub。</p>
 </header>
+
+<div class="skills">
+  <span>Python</span><span>JavaScript / HTML/CSS</span><span>Streamlit</span>
+  <span>智谱开放平台 API</span><span>Chroma 向量库</span><span>MySQL</span>
+  <span>GitHub Pages</span>
+</div>
 
 <h2>项目合集</h2>
 <div class="grid">
 
   <div class="card">
     <h3>① AI 简历优化 + 模拟面试</h3>
-    <p>用大模型优化简历并标注改动理由，再基于岗位模拟面试问答、给评分与改进建议。解决投 AI 岗不会写简历、临场慌的问题。</p>
-    <div class="stack">HTML/CSS/JS · 智谱 GLM-4.7-Flash API · 纯前端直连</div>
-    <span class="tag t-dev">可演示</span>
+    <p class="problem">投 AI 岗不会写简历、面试容易慌？用大模型改简历、练面试，当场看改动理由和评分。</p>
+    <div class="stack">HTML/CSS/JS · 智谱 GLM-4.7-Flash · 纯前端直连</div>
+    <span class="tag t-dev">可在线体验</span>
     <div class="links" style="margin-top:12px">
-      <a href="project-1-resume-ai/README.md">详情</a>
+      <a href="project-1-resume-ai/README.md">项目说明</a>
       <a href="https://tiancai-19.github.io/liuwenjia-ai-portfolio/project-1-resume-ai/">演示</a>
     </div>
   </div>
 
   <div class="card">
     <h3>② 企业知识库问答（RAG）</h3>
-    <p>自然语言提问，AI 基于企业私有文档回答并标注原文引用。全链路自己实现：切分→Embedding→向量检索→生成，纯后端无跨域问题。</p>
-    <div class="stack">Python · Streamlit · Chroma · 智谱 Embedding-3/GLM-4.7-Flash</div>
-    <span class="tag t-dev">已部署在线演示</span>
+    <p class="problem">员工不用翻几百页制度文档，直接问就能拿到带出处的答案，不乱编。</p>
+    <div class="stack">Python · Streamlit · Chroma · 智谱 Embedding-3 / GLM-4.7-Flash</div>
+    <span class="tag t-dev">已上线</span>
     <div class="links" style="margin-top:12px">
-      <a href="project-2-rag-kb/README.md">详情</a>
+      <a href="project-2-rag-kb/README.md">项目说明</a>
       <a href="https://liuwenjia-rag.streamlit.app">演示</a>
     </div>
   </div>
 
   <div class="card">
-    <h3>③ 电商运营自动化工具集</h3>
-    <p>商品图文 AIGC 工作台（智谱双模型：文案 GLM-4.7-Flash + 文生图 CogView-3-Flash，模板库复用）、订单对账自动化（Python + pandas）、客服问答 bot（Coze/Dify）。覆盖电商运营重复劳动。</p>
-    <div class="stack">HTML/CSS/JS · 智谱 GLM-4.7-Flash · CogView-3-Flash · 影刀 RPA · Python</div>
-    <span class="tag t-dev">子工具①可演示</span>
+    <h3>③ 电商图文 AIGC 工作台</h3>
+    <p class="problem">电商运营填上商品信息，一键出标题、卖点和主图，还能批量跑一整店。</p>
+    <div class="stack">HTML/CSS/JS · 智谱双模型 · 影刀 RPA · Python</div>
+    <span class="tag t-dev">子工具①可体验</span>
     <div class="links" style="margin-top:12px">
-      <a href="project-3-ecommerce-rpa/README.md">详情</a>
+      <a href="project-3-ecommerce-rpa/README.md">项目说明</a>
       <a href="https://tiancai-19.github.io/liuwenjia-ai-portfolio/project-3-ecommerce-rpa/">演示</a>
     </div>
   </div>
@@ -92,15 +105,19 @@
 <div class="about">
   <ul>
     <li><b>教育</b>：信阳艺术职业学院 · 软件技术 · 2026 届大专</li>
-    <li><b>技术栈</b>：Python / Java / MySQL / 前端 / 大模型 API / Coze·Dify / 影刀 RPA</li>
+    <li><b>技术栈</b>：Python / JavaScript / 前端 / Streamlit / 智谱 API / Chroma / MySQL</li>
     <li><b>证书</b>：网络安全管理员三级/高级工、普通话二甲</li>
-    <li><b>方法论</b>：会用 JTBD、Mom Test 把模糊业务诉求收敛成明确方案</li>
+    <li><b>项目</b>：3 个 AI 小工具均已上线演示，从需求到部署都自己走通过</li>
   </ul>
 </div>
 
 <div class="contact">
-  <p><b>邮箱</b>：tiancai-19@users.noreply.github.com &nbsp;|&nbsp; <b>GitHub</b>：<a href="https://github.com/tiancai-19">github.com/tiancai-19</a> &nbsp;|&nbsp; <b>作品集主页</b>：<a href="https://tiancai-19.github.io/liuwenjia-ai-portfolio/">tiancai-19.github.io/liuwenjia-ai-portfolio</a></p>
-  <p style="font-size:12.5px">本页已部署 GitHub Pages，即为公开作品集主页。</p>
+  <p>三个项目均已部署上线，源码与在线演示均在 GitHub 公开。</p>
+  <div class="row">
+    <div><b>邮箱</b>：tiancai-19@users.noreply.github.com</div>
+    <div><b>GitHub</b>：<a href="https://github.com/tiancai-19">github.com/tiancai-19</a></div>
+    <div><b>作品集主页</b>：<a href="https://tiancai-19.github.io/liuwenjia-ai-portfolio/">tiancai-19.github.io/liuwenjia-ai-portfolio</a></div>
+  </div>
 </div>
 
 </div>
