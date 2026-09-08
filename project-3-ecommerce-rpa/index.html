@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电商图文 AIGC 工作台</title>
+<style>
+  :root{
+    --bg:#ffffff; --surface:#f7f7f5; --line:#e3e2dd; --text:#1f1f1d;
+    --muted:#6b6a65; --accent:#185FA5; --ok:#3B6D11; --err:#B4231A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.7;}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px;}
+  h1{font-size:24px;margin:0 0 4px;}
+  .sub{color:var(--muted);margin:0 0 20px;}
+  h2{font-size:17px;margin:28px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+  .card{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--bg);margin-bottom:16px;}
+  label{display:block;font-weight:600;margin:10px 0 4px;font-size:14px;}
+  input[type=text],textarea,select{width:100%;padding:9px 10px;border:1px solid var(--line);
+    border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:var(--text);}
+  textarea{resize:vertical;min-height:64px;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .row>div{flex:1;min-width:200px;}
+  button{background:var(--accent);color:#fff;border:none;border-radius:8px;
+    padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;}
+  button.ghost{background:var(--surface);color:var(--text);border:1px solid var(--line);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  .out{background:var(--surface);border-radius:8px;padding:12px 14px;margin-top:10px;font-size:14px;white-space:pre-wrap;word-break:break-word;}
+  .item{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px;}
+  .item b{color:var(--accent);}
+  img.gen{max-width:100%;border-radius:8px;border:1px solid var(--line);margin-top:8px;}
+  .note{font-size:13px;color:var(--muted);background:var(--surface);border-radius:8px;padding:10px 12px;margin-top:8px;}
+  .err{color:var(--err);}
+  .ok{color:var(--ok);}
+  .keybar{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);
+    padding:10px 0;margin-bottom:8px;z-index:5;}
+  .keybar input{width:320px;max-width:60vw;}
+  .pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:10px;background:var(--surface);color:var(--muted);margin-left:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="keybar">
+  <label style="display:inline;margin:0">智谱 API Key</label>
+  <input type="password" id="apiKey" placeholder="粘贴你的智谱 Key（仅存本机浏览器）" autocomplete="off">
+  <button class="ghost" id="btnSave" style="margin-left:8px;padding:6px 12px">保存</button>
+  <span class="pill" id="keyState">未保存</span>
+  <div style="font-size:12px;color:var(--muted);margin-top:4px">
+    同账号免费调用 glm-4.7-flash（文案）与 cogview-3-flash（文生图）。Key 只存浏览器本地，不上传任何服务器。
+  </div>
+</div>
+
+<h1>电商图文 AIGC 工作台</h1>
+<p class="sub">输入商品信息 → AI 生成多版标题/卖点文案 → AI 生成主图 → 收藏成模板复用。纯前端，直连智谱大模型。</p>
+
+<div class="card">
+  <h2 style="margin-top:4px">① 商品信息</h2>
+  <div class="row">
+    <div><label>商品名称</label><input type="text" id="pName" placeholder="如：北欧风陶瓷马克杯"></div>
+    <div><label>类目</label><input type="text" id="pCat" placeholder="如：家居/餐具"></div>
+  </div>
+  <label>核心卖点（用逗号分隔）</label>
+  <textarea id="pPoints" placeholder="如：大容量, 微波炉可用, ins 风, 送礼好看"></textarea>
+  <button id="btnCopy">一键填充示例</button>
+  <button id="btnGen" style="margin-left:8px">生成文案</button>
+  <div class="note">文案由智谱 GLM-4.7-Flash 生成，免费档约 1 次/秒，连点会提示稍后重试。</div>
+  <div class="out" id="copyOut" style="display:none"></div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:4px">② 生成结果（点击「收藏」可存入模板库）</h2>
+  <div id="resultArea"><span class="note">先生成文案，结果会显示在这里。</span></div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:4px">③ 主图生成</h2>
+  <div class="row">
+    <div><label>所用标题（可选，默认取结果第一条）</label><input type="text" id="imgTitle" placeholder="留空则用生成结果第一条"></div>
+    <div><label>风格</label>
+      <select id="imgStyle">
+        <option value="电商产品主图，白底，柔光，高清质感">白底柔光（标准电商）</option>
+        <option value="ins 风场景图，自然光，生活化摆拍">ins 风场景</option>
+        <option value="极简高级感，低饱和，留白构图">极简高级感</option>
+      </select>
+    </div>
+  </div>
+  <button id="btnImg">生成主图</button>
+  <div class="note">主图由智谱 CogView-3-Flash 生成（免费，每张 ¥0）。默认带 AI 水印，生产环境可在智谱控制台签署去水印声明后关闭。生成可能需 10–60 秒，请稍候。</div>
+  <div id="imgArea"><span class="note">生成文案后，点上方按钮即可出图。</span></div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:4px">④ 我的模板库（localStorage 本机存储）</h2>
+  <button class="ghost" id="btnClear" style="padding:6px 12px">清空模板库</button>
+  <div id="tplArea"><span class="note">还没有收藏的模板。</span></div>
+</div>
+
+<div class="note">
+  进阶方向（本 Demo 未做，可在面试中展开）：① 模板落 MySQL/后端实现多人共享；② Excel 批量导入商品循环生成；③ 影刀 RPA 把生成结果回写商品后台。
+</div>
+
+</div>
+
+<script>
+// ---- 配置 ----
+const CHAT_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+const IMAGE_URL = 'https://open.bigmodel.cn/api/paas/v4/images/generations';
+const TEXT_MODEL = 'glm-4.7-flash';
+const IMG_MODEL = 'cogview-3-flash';
+const LS_KEY = 'zhipu_key_ecom';
+const LS_TPL = 'ecom_templates';
+
+// ---- Key 管理 ----
+const apiKeyEl = document.getElementById('apiKey');
+const keyState = document.getElementById('keyState');
+function loadKey(){ const k = localStorage.getItem(LS_KEY); if(k){ apiKeyEl.value = k; keyState.textContent='已保存'; } }
+function saveKey(){ const k = apiKeyEl.value.trim(); if(!k){ alert('请先粘贴 Key'); return; } localStorage.setItem(LS_KEY, k); keyState.textContent='已保存'; }
+function getKey(){ const k = apiKeyEl.value.trim() || localStorage.getItem(LS_KEY) || ''; if(!k) throw new Error('请先填写并保存智谱 API Key'); return k; }
+apiKeyEl.addEventListener('input', ()=> keyState.textContent = apiKeyEl.value.trim()? '未保存（点保存）':'未保存');
+document.getElementById('btnSave').addEventListener('click', saveKey);
+loadKey();
+
+// ---- 通用请求 ----
+async function callChat(system, user){
+  const key = getKey();
+  const resp = await fetch(CHAT_URL, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+key },
+    body: JSON.stringify({
+      model: TEXT_MODEL,
+      messages:[ {role:'system',content:system}, {role:'user',content:user} ],
+      temperature:0.8
+    })
+  });
+  if(resp.status===401) throw new Error('Key 错误或未授权（401），请检查智谱控制台密钥');
+  if(resp.status===429) throw new Error('免费档限速（429），请稍等几秒再试');
+  if(!resp.ok) { const t = await resp.text(); throw new Error('调用失败 '+resp.status+'：'+t.slice(0,200)); }
+  const data = await resp.json();
+  return data.choices[0].message.content;
+}
+
+// ---- 示例 ----
+document.getElementById('btnCopy').addEventListener('click', ()=>{
+  document.getElementById('pName').value = '北欧风陶瓷马克杯';
+  document.getElementById('pCat').value = '家居/餐具';
+  document.getElementById('pPoints').value = '大容量, 微波炉可用, ins风, 送礼好看';
+});
+
+// ---- 生成文案 ----
+document.getElementById('btnGen').addEventListener('click', async ()=>{
+  const name = document.getElementById('pName').value.trim();
+  const cat = document.getElementById('pCat').value.trim();
+  const points = document.getElementById('pPoints').value.trim();
+  if(!name){ alert('请填写商品名称'); return; }
+  const out = document.getElementById('copyOut');
+  out.style.display='block'; out.className='out'; out.textContent='生成中…';
+  const system = '你是资深电商运营，擅长写高点击率的商品标题和卖点文案。必须只返回 JSON，不要任何解释文字。'
+    + 'JSON 结构：{"titles":[3个不同风格的标题],"sellingPoints":[3条卖点],"description":"一段60字内的商品详情","imagePrompt":"一段中文电商主图提示词，描述画面、角度、光线、材质"}';
+  const user = `商品名称：${name}\n类目：${cat||'通用'}\n核心卖点：${points||'无'}\n请生成文案与一张主图的提示词。`;
+  try{
+    const raw = await callChat(system, user);
+    const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderResult(name, cat, json);
+    out.className='out ok'; out.textContent='生成完成 ✅ 可点「收藏」存入模板库，或去下方生成主图。';
+  }catch(e){
+    out.className='out err'; out.textContent='出错：'+e.message;
+  }
+});
+
+function renderResult(name, cat, json){
+  const area = document.getElementById('resultArea');
+  const titles = (json.titles||[]).map((t,i)=>`<div class="item"><b>标题${i+1}：</b>${esc(t)}</div>`).join('');
+  const pts = (json.sellingPoints||[]).map((t,i)=>`<div class="item"><b>卖点${i+1}：</b>${esc(t)}</div>`).join('');
+  area.innerHTML = `
+    ${titles}
+    ${pts}
+    <div class="item"><b>详情：</b>${esc(json.description||'')}</div>
+    <div class="item"><b>主图提示词：</b>${esc(json.imagePrompt||'')}</div>
+    <button id="btnFav">收藏到模板库</button>`;
+  document.getElementById('btnFav').addEventListener('click', ()=>{
+    saveTemplate({ name, cat, titles:json.titles||[], sellingPoints:json.sellingPoints||[], description:json.description||'', imagePrompt:json.imagePrompt||'' });
+  });
+}
+
+// ---- 生成主图 ----
+document.getElementById('btnImg').addEventListener('click', async ()=>{
+  const title = document.getElementById('imgTitle').value.trim();
+  const style = document.getElementById('imgStyle').value;
+  let prompt;
+  if(title){ prompt = `商品「${title}」的${style}`; }
+  else {
+    const ip = document.querySelector('#resultArea .item:nth-last-child(2)');
+    // 取结果区的 imagePrompt（倒数第二项）
+    const items = document.querySelectorAll('#resultArea .item b');
+    let imgPrompt='';
+    items.forEach(b=>{ if(b.textContent.includes('主图提示词')) imgPrompt = b.nextSibling? b.nextSibling.textContent : ''; });
+    prompt = imgPrompt ? `${imgPrompt}，${style}` : `一张电商产品主图，${style}`;
+  }
+  const area = document.getElementById('imgArea');
+  area.innerHTML = '<div class="note">主图生成中（可能 10–60 秒）…</div>';
+  try{
+    const key = getKey();
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 120000);
+    const resp = await fetch(IMAGE_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+key },
+      body: JSON.stringify({ model: IMG_MODEL, prompt: prompt, n:1, size:'1024x1024' }),
+      signal: ctrl.signal
+    });
+    clearTimeout(timer);
+    if(resp.status===401) throw new Error('Key 错误（401）');
+    if(resp.status===429) throw new Error('免费档限速（429），稍后再试');
+    if(!resp.ok){ const t=await resp.text(); throw new Error('图像调用失败 '+resp.status+'：'+t.slice(0,200)); }
+    const data = await resp.json();
+    const url = data.data && data.data[0] && (data.data[0].url || data.data[0].b64_json);
+    if(!url){ throw new Error('未拿到图像地址：'+JSON.stringify(data).slice(0,200)); }
+    area.innerHTML = `<img class="gen" src="${url}" alt="生成的主图"><div class="note">提示词：${esc(prompt)}</div>`;
+  }catch(e){
+    if(e.name==='AbortError'){ area.innerHTML='<div class="out err">生成超时（120秒），免费档可能排队慢，请重试或换时段。</div>'; }
+    else area.innerHTML = `<div class="out err">出错：${esc(e.message)}</div>`;
+  }
+});
+
+// ---- 模板库 ----
+function getTpl(){ try{ return JSON.parse(localStorage.getItem(LS_TPL)||'[]'); }catch(e){ return []; } }
+function saveTemplate(t){
+  const list = getTpl(); list.push(Object.assign({savedAt:new Date().toLocaleString()}, t));
+  localStorage.setItem(LS_TPL, JSON.stringify(list));
+  renderTpl();
+}
+function renderTpl(){
+  const area = document.getElementById('tplArea');
+  const list = getTpl();
+  if(!list.length){ area.innerHTML='<span class="note">还没有收藏的模板。</span>'; return; }
+  area.innerHTML = list.map((t,i)=>`
+    <div class="item">
+      <b>${esc(t.name||'未命名')}</b> <span class="pill">${esc(t.cat||'')}</span>
+      <div style="font-size:13px;margin-top:4px">${esc((t.titles||[]).join(' / '))}</div>
+      <button class="ghost" data-del="${i}" style="padding:4px 10px;margin-top:6px">删除</button>
+    </div>`).join('');
+  area.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{
+    const list2 = getTpl(); list2.splice(+b.dataset.del,1); localStorage.setItem(LS_TPL, JSON.stringify(list2)); renderTpl();
+  }));
+}
+document.getElementById('btnClear').addEventListener('click', ()=>{
+  if(confirm('确定清空模板库？')){ localStorage.removeItem(LS_TPL); renderTpl(); }
+});
+renderTpl();
+
+// ---- 工具 ----
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
