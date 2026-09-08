@@ -45,6 +45,11 @@
 | `keywords` | string | 模板提取 | | 搜索关键词，逗号分隔 |
 | `price` | number | 模板默认 | ✓ | 走模板默认值 |
 
+> **这份队列文件现在由网页端直接产出**：点 ④ 模板库的「导出为 Excel（交付物）」按钮，
+> 得到 `模板库导出_YYYY-MM-DD.xlsx`，每行含 `name / cat / title1-3 / point1-3 / description / imagePrompt`。
+> 影刀读取时按列名映射：`title` ← `title1`；`description` ← `point1 + '\n' + point2 + '\n' + point3 + '\n\n' + description`。
+> 也就是说**网页导出 → 影刀回写**这条链路在字段层面已经对齐，不需要额外转换脚本。
+
 > ⑤ 批量模式目前是 localStorage。要接影刀，要么在网页加个"导出 CSV"按钮（推荐，成本极低），要么用飞书多维表 / 微信文件助手做中转。
 
 ## 4. 影刀指令清单（按顺序）

@@ -63,6 +63,9 @@
   <div style="font-size:12px;color:var(--muted);margin-top:4px">
     同账号免费调用 glm-4.7-flash（文案）与 cogview-3-flash（文生图）。Key 只存浏览器本地，不上传任何服务器。
   </div>
+  <div style="font-size:12px;color:var(--muted);margin-top:4px">
+    Excel 解析库 SheetJS：<span id="sheetjsState">加载中…</span> <a href="#" id="retrySheetjs" style="display:none;margin-left:4px">点此重试</a>
+  </div>
 </div>
 
 <h1>电商图文 AIGC 工作台</h1>
@@ -105,8 +108,15 @@
 </div>
 
 <div class="card">
-  <h2 style="margin-top:4px">④ 我的模板库（localStorage 本机存储）</h2>
+  <h2 style="margin-top:4px">④ 我的模板库</h2>
   <button class="ghost" id="btnClear" style="padding:6px 12px">清空模板库</button>
+  <button class="ghost" id="btnExportTpl" style="padding:6px 12px;margin-left:8px">导出为 Excel</button>
+  <button class="ghost" id="btnImportTpl" style="padding:6px 12px;margin-left:8px">导入 Excel</button>
+  <input type="file" id="tplFile" accept=".xlsx,.xls" style="display:none">
+  <div class="note" style="margin-top:8px">
+    <b>导出</b>：每行含商品名 / 类目 / 3 条标题 / 3 条卖点 / 详情 / 主图提示词，用于电商上新与运营交单。<br>
+    <b>导入</b>：用于备份、换机迁移与批量更新模板库。
+  </div>
   <div id="tplArea"><span class="note">还没有收藏的模板。</span></div>
 </div>
 
@@ -135,15 +145,34 @@
 </div>
 
 <div class="note">
-  进阶方向（本 Demo 未做，可在面试中展开）：① 模板落 MySQL/后端实现多人共享。<br>
-  配套：影刀 RPA 流程设计文档 <a href="rpa-workflow.md" target="_blank">rpa-workflow.md</a>（运行需本机装影刀客户端）。
+  进阶方向（本 Demo 未做，可在面试中展开）：① 模板落 MySQL / 后端实现多人共享与权限管理。
 </div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/[email protected]/dist/xlsx.full.min.js"></script>
+<script>
+function sheetjsOk(){
+  const e=document.getElementById('sheetjsState'); if(e){ e.textContent='已就绪'; e.style.color='var(--ok)'; }
+  const r=document.getElementById('retrySheetjs'); if(r) r.style.display='none';
+}
+function sheetjsErr(){
+  const e=document.getElementById('sheetjsState'); if(e){ e.textContent='CDN 加载失败，请检查网络'; e.style.color='var(--err)'; }
+  const r=document.getElementById('retrySheetjs'); if(r) r.style.display='inline';
+}
+</script>
+<script src="https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onload="sheetjsOk()" onerror="sheetjsErr()"></script>
 <script>
 // ---- 配置 ----
+// ---- SheetJS 重试按钮 ----
+document.getElementById('retrySheetjs').addEventListener('click', (e)=>{
+  e.preventDefault();
+  const el=document.getElementById('sheetjsState'); if(el){ el.textContent='重新加载中…'; el.style.color='var(--muted)'; }
+  const r=document.getElementById('retrySheetjs'); if(r) r.style.display='none';
+  const s=document.createElement('script');
+  s.src='https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=sheetjsOk; s.onerror=sheetjsErr;
+  document.head.appendChild(s);
+});
 const CHAT_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const IMAGE_URL = 'https://open.bigmodel.cn/api/paas/v4/images/generations';
 const TEXT_MODEL = 'glm-4.7-flash';
@@ -292,6 +321,71 @@ function renderTpl(){
 document.getElementById('btnClear').addEventListener('click', ()=>{
   if(confirm('确定清空模板库？')){ localStorage.removeItem(LS_TPL); renderTpl(); }
 });
+
+// 导出模板库为 xlsx
+function sheetjsAlert(){
+  const s=document.getElementById('sheetjsState');
+  alert('SheetJS 还没就绪（页面顶部状态：' + (s?s.textContent:'未知') + '）。等几秒再点，或点「点此重试」。');
+}
+document.getElementById('btnExportTpl').addEventListener('click', ()=>{
+  if(typeof XLSX==='undefined'){ sheetjsAlert(); return; }
+  const list = getTpl();
+  if(!list.length){ alert('模板库还是空的，先生成并收藏几个商品'); return; }
+  const rows = list.map(t=>{
+    const ti = t.titles||[], pt = t.sellingPoints||[];
+    return {
+      'name': t.name||'', 'cat': t.cat||'',
+      'title1': ti[0]||'', 'title2': ti[1]||'', 'title3': ti[2]||'',
+      'point1': pt[0]||'', 'point2': pt[1]||'', 'point3': pt[2]||'',
+      'description': t.description||'',
+      'imagePrompt': t.imagePrompt||'',
+      'savedAt': t.savedAt||''
+    };
+  });
+  const ws2 = XLSX.utils.json_to_sheet(rows);
+  const wb2 = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb2, ws2, '模板库');
+  const d = new Date();
+  const stamp = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb2, '模板库导出_'+stamp+'.xlsx');
+});
+
+// 导入 xlsx 回灌模板库
+document.getElementById('btnImportTpl').addEventListener('click', ()=>{ document.getElementById('tplFile').click(); });
+document.getElementById('tplFile').addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  if(typeof XLSX==='undefined'){ sheetjsAlert(); e.target.value=''; return; }
+  try{
+    const buf = await f.arrayBuffer();
+    const wb3 = XLSX.read(buf, {type:'array'});
+    const ws3 = wb3.Sheets[wb3.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws3, {defval:''});
+    if(!rows.length){ alert('文件里没有数据行'); e.target.value=''; return; }
+    const get=(r,...keys)=>{ for(const k of keys){ const v=r[k]; if(v!=null && String(v).trim()!=='') return String(v).trim(); } return ''; };
+    const list = getTpl();
+    let n = 0;
+    rows.forEach(r=>{
+      const name = get(r,'name','商品名称','名称');
+      if(!name) return;
+      const t1=get(r,'title1','标题1'), t2=get(r,'title2','标题2'), t3=get(r,'title3','标题3');
+      const p1=get(r,'point1','卖点1'), p2=get(r,'point2','卖点2'), p3=get(r,'point3','卖点3');
+      list.push({
+        name, cat:get(r,'cat','类目'),
+        titles:[t1,t2,t3].filter(Boolean),
+        sellingPoints:[p1,p2,p3].filter(Boolean),
+        description:get(r,'description','详情'),
+        imagePrompt:get(r,'imagePrompt','主图提示词','提示词'),
+        savedAt:get(r,'savedAt','收藏时间')||new Date().toLocaleString()
+      });
+      n++;
+    });
+    if(!n){ alert('没读到有效的「商品名称」列，请确认表头是 name 或 商品名称'); e.target.value=''; return; }
+    localStorage.setItem(LS_TPL, JSON.stringify(list));
+    renderTpl();
+    alert('已导入 '+n+' 条模板，模板库现有 '+list.length+' 条');
+  }catch(err){ alert('导入失败：'+err.message); }
+  e.target.value='';
+});
 renderTpl();
 
 // ---- 批量模式 ----
@@ -304,12 +398,15 @@ let batchCancel = false;
 // 下载模板
 document.getElementById('dlTpl').addEventListener('click', (e)=>{
   e.preventDefault();
-  if(typeof XLSX==='undefined'){ alert('SheetJS 还没加载完，稍等再试'); return; }
+  if(typeof XLSX==='undefined'){ const s=document.getElementById('sheetjsState'); alert('SheetJS 还没就绪（页面顶部状态：' + (s?s.textContent:'未知') + '）。等几秒再点，或点「点此重试」。'); return; }
   const ws = XLSX.utils.aoa_to_sheet([
     ['name','cat','points'],
-    ['北欧风陶瓷马克杯','家居/餐具','大容量, 微波炉可用, ins风, 送礼好看'],
-    ['简约实木餐桌','家居/家具','白橡木, 可伸缩, 6人位, 环保水性漆'],
-    ['不锈钢保温杯','家居/水具','316钢, 24h保温, 500ml, 便携']
+    ['全屋定制衣柜','家居/定制家具','多层实木, 环保E0级, 免费上门量尺, 10年质保'],
+    ['现代简约吸顶灯','家居/灯具','三色变光, LED护眼, 遥控调光, 客厅卧室通用'],
+    ['岩板餐桌','家居/家具','岩板台面, 耐高温, 6人位, 现代简约'],
+    ['智能马桶','卫浴/智能洁具','即热式, 座圈加热, 脚感冲水, 静音缓降'],
+    ['免漆生态板','建材/板材','E0级环保, 防潮, 18mm加厚, 全屋定制专用'],
+    ['断桥铝封阳台窗','建材/门窗','70系列, 双层中空钢化, 隔音隔热, 免费测量安装']
   ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '商品列表');
@@ -319,7 +416,7 @@ document.getElementById('dlTpl').addEventListener('click', (e)=>{
 // 解析 xlsx
 document.getElementById('xlsxFile').addEventListener('change', async (e)=>{
   const f = e.target.files[0]; if(!f) return;
-  if(typeof XLSX==='undefined'){ alert('SheetJS 还没加载完，稍等再试'); return; }
+  if(typeof XLSX==='undefined'){ const s=document.getElementById('sheetjsState'); alert('SheetJS 还没就绪（页面顶部状态：' + (s?s.textContent:'未知') + '）。等几秒再点，或点「点此重试」。'); return; }
   try{
     const buf = await f.arrayBuffer();
     const wb = XLSX.read(buf, {type:'array'});
