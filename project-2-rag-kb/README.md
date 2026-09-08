@@ -32,7 +32,7 @@ data/company_faq.txt  ──►  切分  ──►  Embedding-3  ──►  Chro
 - 检索召回准、回答带引用、资料缺失会拒答
 - 成本：生成免费（GLM-4.7-Flash），向量化 Embedding-3 新用户送额度，demo 量几乎零成本
 - 截图：（待补：本地 `streamlit run app.py` 跑通后截图贴此处）
-- 公开链接：（待补：部署 Streamlit Community Cloud 后补 `https://xxx.streamlit.app`）
+- 公开链接：https://liuwenjia-rag.streamlit.app
 
 ## 5. 踩坑（Pitfalls）
 - Chroma 集合名必须 3-512 字符且只能字母/数字/下划线，初版命名 `"kb"` 报错 `Got: kb`，改成 `"company_kb"` 解决
