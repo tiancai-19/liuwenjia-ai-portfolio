@@ -37,7 +37,7 @@ if not api_key:
     st.stop()
 
 # ---------- 建索引 ----------
-DOC = "data/company_faq.txt"
+DOC = os.path.join(os.path.dirname(__file__), "data", "company_faq.txt")
 rebuild = st.sidebar.button("🔄 重建索引")
 need_build = rebuild or not os.path.exists(CHROMA_PATH)
 if need_build:

@@ -22,7 +22,8 @@ import chromadb
 EMBED_MODEL = "embedding-3"          # 智谱中文向量化模型（新用户送额度，demo 几乎零成本）
 GEN_MODEL = "glm-4.7-flash"          # 智谱免费生成模型
 BASE_URL = "https://open.bigmodel.cn/api/paas/v4"  # 智谱 OpenAI 兼容端点
-CHROMA_PATH = "./chroma_db"          # 向量库持久化目录（本地磁盘）
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CHROMA_PATH = os.path.join(BASE_DIR, "chroma_db")  # 向量库持久化目录（本地磁盘）
 COLLECTION = "company_kb"            # 集合名（Chroma 要求 3-512 字符）
 
 
