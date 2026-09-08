@@ -38,5 +38,3 @@ python -m http.server 8000
 - 在线演示：https://tiancai-19.github.io/liuwenjia-ai-portfolio/project-1-resume-ai/
 - 使用：打开页面 → 顶部填智谱 API Key 并保存 → 选「简历优化」或「模拟面试」tab 使用
 
-## 面试一句话
-「我给自己做了一个求职工具，用大模型优化简历并模拟面试，解决我投 AI 岗时不会写简历、临场慌的问题；为了不暴露 Key，我用纯前端 + 浏览器本地存储的方案，无后端服务器。」
