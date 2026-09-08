@@ -49,5 +49,3 @@ streamlit run app.py
 ```
 - 部署 Streamlit Community Cloud：登录 share.streamlit.io → New app → 选仓库 `liuwenjia-ai-portfolio` / 分支 `main` / 入口 `project-2-rag-kb/app.py` → Advanced → Secrets 填 `ZHIPU_API_KEY=你的key` → Deploy（Public app 免费，无需信用卡）
 
-## 面试可讲
-「我从文档解析、分块、Embedding、向量检索到大模型生成全链路自己实现。最难的是切分和检索召回质量——块太大语义杂、太小丢上下文；我用句号断句控制在 280 字内。还有幻觉问题，我用 Prompt 强制模型只基于检索段落作答并标引用，资料没有就拒答。」

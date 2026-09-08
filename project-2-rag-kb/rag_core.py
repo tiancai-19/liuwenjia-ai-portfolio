@@ -3,7 +3,7 @@ rag_core.py — 企业知识库问答核心（RAG）
 作者：刘文佳（GitHub: tiancai-19）
 技术栈：智谱 Embedding-3（向量化） + Chroma（本地向量库） + GLM-4.7-Flash（生成）
 
-设计要点（面试可讲）：
+设计要点：
 1. 文档切分 → 向量化（Embedding-3）→ 存入本地 Chroma，构建向量索引
 2. 用户提问同样向量化，Chroma 做相似度检索，召回 top-k 段落
 3. 把召回段落作为上下文拼进 Prompt，让 GLM-4.7-Flash 生成带 [1][2] 引用的答案
