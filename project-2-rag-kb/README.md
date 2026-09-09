@@ -47,5 +47,5 @@ pip install -r requirements.txt
 streamlit run app.py
 # 浏览器打开 http://localhost:8501 → 左侧填 Key → 首次自动建索引 → 提问
 ```
-- 部署 Streamlit Community Cloud：登录 share.streamlit.io → New app → 选仓库 `liuwenjia-ai-portfolio` / 分支 `main` / 入口 `project-2-rag-kb/app.py` → Advanced → Secrets 填 `ZHIPU_API_KEY=你的key` → Deploy（Public app 免费，无需信用卡）
+- 云端部署：用 Streamlit Community Cloud（免费 Public app），入口 `project-2-rag-kb/app.py`，Secrets 填 `ZHIPU_API_KEY`
 
