@@ -36,6 +36,17 @@
   }
   .head-center { display: inline-block; text-align: center; }
   .back:hover { text-decoration: underline; }
+  @media (max-width: 600px) {
+    .back {
+      position: static;
+      display: block;
+      text-align: left;
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+    header { padding-top: 18px; }
+    header h1 { font-size: 20px; }
+  }
   .badge {
     display: inline-block; margin-top: 10px; padding: 4px 12px; border-radius: 999px;
     background: var(--brand-soft); color: var(--brand); font-size: 12px;
