@@ -75,9 +75,9 @@ if q:
             st.session_state["last_err"] = str(e)
 
 if "last_ans" in st.session_state:
-    with st.chat_message("user", avatar="问"):
+    with st.chat_message("user", avatar="👤"):
         st.write(st.session_state["last_q"])
-    with st.chat_message("assistant", avatar="答"):
+    with st.chat_message("assistant", avatar="💡"):
         st.write(st.session_state["last_ans"])
         with st.expander("📎 检索到的参考资料（模型据此作答）"):
             for i, r in enumerate(st.session_state["last_refs"], 1):
