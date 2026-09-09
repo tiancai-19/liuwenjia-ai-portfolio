@@ -63,23 +63,35 @@ else:
 
 # ---------- 问答 ----------
 st.markdown("### 提问")
-q = st.text_input(
-    "输入你的问题：",
-    placeholder="例如：年假怎么算？ / 报销流程是什么？ / 试用期多久？",
-    label_visibility="collapsed",
-)
+with st.form("qa_form", clear_on_submit=True):
+    q = st.text_input(
+        "输入你的问题：",
+        placeholder="例如：年假怎么算？ / 报销流程是什么？ / 试用期多久？",
+        label_visibility="collapsed",
+    )
+    _, btn = st.columns([5, 1])
+    with btn:
+        submitted = st.form_submit_button("发送", use_container_width=True)
 
-if q:
+if submitted and q:
     with st.spinner("检索 + 生成中…"):
         try:
             ans, refs = query(api_key, q)
-            st.markdown("### 回答")
-            st.write(ans)
-            with st.expander("📎 检索到的参考资料（模型据此作答）"):
-                for i, r in enumerate(refs, 1):
-                    st.markdown(f"**[{i}]** {r}")
+            st.session_state["last_q"] = q
+            st.session_state["last_ans"] = ans
+            st.session_state["last_refs"] = refs
+            st.session_state.pop("last_err", None)
         except Exception as e:
-            st.error(f"调用出错：{e}")
+            st.session_state["last_err"] = str(e)
+
+if "last_ans" in st.session_state:
+    st.markdown("### 回答")
+    st.write(st.session_state["last_ans"])
+    with st.expander("📎 检索到的参考资料（模型据此作答）"):
+        for i, r in enumerate(st.session_state["last_refs"], 1):
+            st.markdown(f"**[{i}]** {r}")
+if "last_err" in st.session_state:
+    st.error(f"调用出错：{st.session_state['last_err']}")
 
 st.markdown(
     "<div style='margin-top:32px;padding-top:16px;border-top:1px solid #e3e2dd;"
