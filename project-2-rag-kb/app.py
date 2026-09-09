@@ -62,18 +62,8 @@ else:
     st.sidebar.info("✅ 索引已存在（需更新文档时点“重建索引”）")
 
 # ---------- 问答 ----------
-st.markdown("### 提问")
-with st.form("qa_form", clear_on_submit=True):
-    q = st.text_input(
-        "输入你的问题：",
-        placeholder="例如：年假怎么算？ / 报销流程是什么？ / 试用期多久？",
-        label_visibility="collapsed",
-    )
-    _, btn = st.columns([5, 1])
-    with btn:
-        submitted = st.form_submit_button("发送", use_container_width=True)
-
-if submitted and q:
+q = st.chat_input("例如：年假怎么算？ / 报销流程是什么？ / 试用期多久？")
+if q:
     with st.spinner("检索 + 生成中…"):
         try:
             ans, refs = query(api_key, q)
@@ -85,11 +75,13 @@ if submitted and q:
             st.session_state["last_err"] = str(e)
 
 if "last_ans" in st.session_state:
-    st.markdown("### 回答")
-    st.write(st.session_state["last_ans"])
-    with st.expander("📎 检索到的参考资料（模型据此作答）"):
-        for i, r in enumerate(st.session_state["last_refs"], 1):
-            st.markdown(f"**[{i}]** {r}")
+    with st.chat_message("user"):
+        st.write(st.session_state["last_q"])
+    with st.chat_message("assistant"):
+        st.write(st.session_state["last_ans"])
+        with st.expander("📎 检索到的参考资料（模型据此作答）"):
+            for i, r in enumerate(st.session_state["last_refs"], 1):
+                st.markdown(f"**[{i}]** {r}")
 if "last_err" in st.session_state:
     st.error(f"调用出错：{st.session_state['last_err']}")
 
