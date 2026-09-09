@@ -75,20 +75,12 @@ if q:
             st.session_state["last_err"] = str(e)
 
 if "last_ans" in st.session_state:
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="问"):
         st.write(st.session_state["last_q"])
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="答"):
         st.write(st.session_state["last_ans"])
         with st.expander("📎 检索到的参考资料（模型据此作答）"):
             for i, r in enumerate(st.session_state["last_refs"], 1):
                 st.markdown(f"**[{i}]** {r}")
 if "last_err" in st.session_state:
     st.error(f"调用出错：{st.session_state['last_err']}")
-
-st.markdown(
-    "<div style='margin-top:32px;padding-top:16px;border-top:1px solid #e3e2dd;"
-    "text-align:center;color:#6b6a65;font-size:13px;'>"
-    "<a href='https://tiancai-19.github.io/liuwenjia-ai-portfolio/' style='color:#0F6E56;"
-    "text-decoration:none;'>← 返回作品集主页</a></div>",
-    unsafe_allow_html=True,
-)
