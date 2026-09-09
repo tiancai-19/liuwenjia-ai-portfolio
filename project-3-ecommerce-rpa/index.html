@@ -292,10 +292,13 @@ document.getElementById('btnCopy').addEventListener('click', ()=>{
 
 // ---- 生成文案 ----
 document.getElementById('btnGen').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btnGen');
+  if(btn.disabled) return; // 防抖：连点时直接丢掉第二次
   const name = document.getElementById('pName').value.trim();
   const cat = document.getElementById('pCat').value.trim();
   const points = document.getElementById('pPoints').value.trim();
   if(!name){ alert('请填写商品名称'); return; }
+  btn.disabled = true;
   const out = document.getElementById('copyOut');
   out.style.display='block'; out.className='out'; out.textContent='生成中…';
   const system = '你是资深电商运营，擅长写高点击率的商品标题和卖点文案。必须只返回 JSON，不要任何解释文字。'
@@ -310,6 +313,8 @@ document.getElementById('btnGen').addEventListener('click', async ()=>{
     out.className='out ok'; out.textContent='生成完成 ✅ 可点「收藏」存入模板库，或去下方生成主图。';
   }catch(e){
     out.className='out err'; out.textContent='出错：'+e.message;
+  }finally{
+    btn.disabled = false; // 无论成功失败都重启
   }
 });
 
@@ -648,6 +653,7 @@ async function runOne(it, div, withImg, signal){
 function renderBatchSummary(){
   const results = document.getElementById('batchResults');
   const old = document.getElementById('batchSummary'); if(old) old.remove();
+  updateBatchProgText(); // 同步顶部进度文字（重试完成 / 继续生成 / 任何 status 变化后）
   const okList = batchItems.filter(x=>x.status==='ok');
   const failList = batchItems.filter(x=>x.selected && x.name && (x.status==='err' || x.status==='cancelled'));
   const pendingList = batchItems.filter(x=>x.selected && x.name && (!x.status || x.status==='pending'));
@@ -667,10 +673,13 @@ function renderBatchSummary(){
     const rb = document.createElement('button'); rb.className='ghost'; rb.textContent=`重试 ${failList.length} 条失败项`; rb.style.marginTop='0';
     rb.onclick = async ()=>{
       rb.disabled = true; rb.textContent='重试中…';
+      batchCancel = false; // 重试是主动行为，清掉上次"已取消"状态，否则顶部文字会误显示"已取消"
+      const progText = document.getElementById('batchProgressText');
       const withImg = document.getElementById('batchWithImg').checked;
       for(const it of failList){
         const div = results.querySelector(`.batch-item[data-i="${it.idx}"]`);
         if(!div) continue;
+        if(progText) progText.textContent = `正在重试「${it.name}」…`;
         await runOne(it, div, withImg, null);
         await sleep(1200);
       }
@@ -743,16 +752,26 @@ async function runBatch(){
   }
   batchAbort = null;
   bar.style.width = '100%';
-  const pending = batchItems.filter(x=>x.selected && x.name && x.status !== 'ok');
-  const totalSelected = batchItems.filter(x=>x.selected && x.name).length;
-  const doneNow = batchItems.filter(x=>x.status==='ok').length;
-  if(batchCancel){
-    progText.textContent = `已取消：本批已完成 ${doneNow}/${totalSelected}` + (pending.length? `，剩 ${pending.length} 条未生成` : '');
-  }else{
-    progText.textContent = `本批生成完成：${doneNow}/${totalSelected}` + (pending.length? `，剩 ${pending.length} 条未生成` : '');
-  }
+  updateBatchProgText();
   startBtn.disabled = false; cancelBtn.style.display='none';
   renderBatchSummary();
+}
+
+// 统一刷新顶部进度文字（主循环结束 / 失败项重试 / 继续生成剩余 都调）
+function updateBatchProgText(){
+  const progText = document.getElementById('batchProgressText');
+  if(!progText) return;
+  const totalSelected = batchItems.filter(x=>x.selected && x.name).length;
+  const doneNow = batchItems.filter(x=>x.status==='ok').length;
+  const pending = batchItems.filter(x=>x.selected && x.name && x.status !== 'ok').length;
+  const canceled = batchCancel;
+  if(canceled){
+    progText.textContent = `已取消：本批已完成 ${doneNow}/${totalSelected}` + (pending? `，剩 ${pending} 条未生成` : '');
+  }else if(pending){
+    progText.textContent = `本批生成完成：${doneNow}/${totalSelected}，剩 ${pending} 条未生成`;
+  }else{
+    progText.textContent = `本批已完成：${doneNow}/${totalSelected} ✅`;
+  }
 }
 
 // ---- 工具 ----
