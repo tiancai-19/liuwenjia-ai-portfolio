@@ -302,14 +302,17 @@ document.getElementById('btnGen').addEventListener('click', async ()=>{
   const out = document.getElementById('copyOut');
   out.style.display='block'; out.className='out'; out.textContent='生成中…';
   const system = '你是资深电商运营，擅长写高点击率的商品标题和卖点文案。必须只返回 JSON，不要任何解释文字。'
-    + 'JSON 结构：{"titles":[3个不同风格的标题],"sellingPoints":[3条卖点],"description":"一段60字内的商品详情","imagePrompt":"一段中文电商主图提示词，描述画面、角度、光线、材质"}';
+    + 'JSON 结构：{"titles":[3个不同风格的标题],"sellingPoints":[3条卖点],"description":"一段60字内的商品详情","imagePrompt":"一段中文电商主图提示词，描述画面、角度、光线、材质"}'
+    + '重要约束：titles/sellingPoints/description 中禁止编造商品材质、型号、规格、认证等硬参数'
+    + '（例如不锈钢型号 304/201、实木、板材厚度、防火防水等），只能使用"商品名称"和"核心卖点"里已经出现过的参数；'
+    + '不确定时只写营销性描述。imagePrompt 为作图参考，不受此限制。';
   const user = `商品名称：${name}\n类目：${cat||'通用'}\n核心卖点：${points||'无'}\n请生成文案与一张主图的提示词。`;
   try{
     const raw = await callChatWithRetry(system, user, null, (attempt, wait)=>{
       out.className='out'; out.textContent=`触发免费档限速，${(wait/1000).toFixed(1)} 秒后自动重试（${attempt}/3）…`;
     });
     const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
-    renderResult(name, cat, json);
+    renderResult(name, cat, points, json);
     out.className='out ok'; out.textContent='生成完成 ✅ 可点「收藏」存入模板库，或去下方生成主图。';
   }catch(e){
     out.className='out err'; out.textContent='出错：'+e.message;
@@ -319,16 +322,22 @@ document.getElementById('btnGen').addEventListener('click', async ()=>{
 });
 
 let lastResult = null;
-function renderResult(name, cat, json){
+function renderResult(name, cat, points, json){
   const area = document.getElementById('resultArea');
   const titles = (json.titles||[]).map((t,i)=>`<div class="item"><b>标题${i+1}：</b>${esc(t)}</div>`).join('');
   const pts = (json.sellingPoints||[]).map((t,i)=>`<div class="item"><b>卖点${i+1}：</b>${esc(t)}</div>`).join('');
-  lastResult = { name, cat, titles:json.titles||[], sellingPoints:json.sellingPoints||[], description:json.description||'', imagePrompt:json.imagePrompt||'' };
+  // 参数白名单校验：AI 只能使用原始商品信息里出现过的硬参数
+  const hits = checkHardParams(
+    (name||'')+' '+(cat||'')+' '+(points||''),
+    [].concat(json.titles||[], json.sellingPoints||[], [json.description||''])
+  );
+  lastResult = { name, cat, titles:json.titles||[], sellingPoints:json.sellingPoints||[], description:json.description||'', imagePrompt:json.imagePrompt||'', hallu:hits };
   area.innerHTML = `
     ${titles}
     ${pts}
     <div class="item"><b>详情：</b>${esc(json.description||'')}</div>
     <div class="item"><b>主图提示词：</b>${esc(json.imagePrompt||'')}</div>
+    ${halluWarnHtml(hits)}
     <button id="btnFav">收藏到模板库</button>
     <button class="ghost" id="btnCopyText" style="margin-left:8px">复制全部文案</button>`;
   document.getElementById('btnFav').addEventListener('click', ()=>{ saveTemplate(lastResult); });
@@ -484,9 +493,53 @@ document.getElementById('tplFile').addEventListener('change', async (e)=>{
 });
 renderTpl();
 
+// ================= 参数白名单校验（防 AI 编造硬参数） =================
+// 背景：AI 生成文案时可能编造原始商品没有的材质/型号/规格（实测把钢制上下床写成了"实木"），
+// 电商直接上架属于虚假宣传。这里做"生成后实时比对"：AI 只能使用原始商品信息里出现过的硬参数。
+const HARD_PARAM_WORDS = [
+  // 金属型号
+  '304','201','316','430',
+  // 木材材质
+  '实木','橡木','松木','桦木','多层板','密度板','颗粒板','免漆板',
+  // 铝及其他金属
+  '太空铝','铝合金','铸铝','钛合金',
+  // 钢材与表面工艺
+  '冷轧钢','冷轧钢板','镀锌板','电解板','静电喷塑','磷化','酸洗',
+  // 板材厚度
+  '0.6mm','0.8mm','1.0mm','1.2mm','1.5mm','2.0mm',
+  // 性能参数（易虚标）
+  '防火','防水','防潮','防锈','防腐','防静电','防爆',
+  // 认证
+  'iso9001','ce认证','3c认证'
+];
+
+// 校验：返回 AI 生成文案里"原始商品信息中没有"的硬参数
+// sourceText = 原始商品名 + 类目 + 核心卖点（白名单来源）
+// genTexts   = AI 生成的标题/卖点/详情（被检查对象）
+function checkHardParams(sourceText, genTexts){
+  const src = String(sourceText || '').toLowerCase();
+  const allGen = (genTexts || []).filter(Boolean).join(' ').toLowerCase();
+  if(!src || !allGen) return [];
+  const hits = [];
+  HARD_PARAM_WORDS.forEach(function(w){
+    if(allGen.indexOf(w) >= 0 && src.indexOf(w) < 0) hits.push(w);
+  });
+  return hits;
+}
+
+// 风险提示 HTML（无风险返回空串）
+function halluWarnHtml(hits){
+  if(!hits || !hits.length) return '';
+  return '<div style="margin-top:6px;padding:6px 8px;border-radius:6px;background:#fff4e5;border:1px solid #ffb865;color:#8a5300;font-size:12px;line-height:1.6">'
+    + '⚠️ <b>参数校验</b>：AI 使用了原始商品信息中没有的硬参数 <b>' + hits.map(esc).join('、') + '</b>，上架前请人工核对，避免虚假宣传。'
+    + '</div>';
+}
+
 // ---- 批量模式 ----
 const SYS_BATCH = '你是资深电商运营，擅长写高点击率的商品标题和卖点文案。必须只返回 JSON，不要任何解释文字。'
-  + 'JSON 结构：{"titles":[3个不同风格的标题],"sellingPoints":[3条卖点],"description":"一段60字内的商品详情","imagePrompt":"一段中文电商主图提示词"}';
+  + 'JSON 结构：{"titles":[3个不同风格的标题],"sellingPoints":[3条卖点],"description":"一段60字内的商品详情","imagePrompt":"一段中文电商主图提示词"}'
+  + '重要约束：禁止编造商品材质、型号、规格、认证等硬参数（例如不锈钢型号 304/201、实木、板材厚度、防火防水等）。'
+  + '只能使用"商品名称"和"核心卖点"里已经出现过的参数；不确定时只写营销性描述，不要写具体参数。';
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 let batchItems = [];
 let batchCancel = false;
@@ -591,11 +644,16 @@ async function runOne(it, div, withImg, signal){
     });
     const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
     it.json = json; it.err = '';
+    // 参数白名单校验：AI 只能使用原始商品信息里出现过的硬参数
+    it.hallu = checkHardParams(
+      (it.name||'')+' '+(it.cat||'')+' '+(it.points||''),
+      [].concat(json.titles||[], json.sellingPoints||[], [json.description||''])
+    );
     const titles = (json.titles||[]).map(t=>`<div>• ${esc(t)}</div>`).join('');
     const pts = (json.sellingPoints||[]).map(t=>`<div>• ${esc(t)}</div>`).join('');
     const result = document.createElement('div'); result.className='b-result';
     result.style.cssText='margin-top:6px;font-size:13px;border-top:1px dashed var(--line);padding-top:6px';
-    result.innerHTML = `<b>文案：</b>${titles}${pts}<div>详情：${esc(json.description||'')}</div><div>主图提示词：${esc(json.imagePrompt||'')}</div>`;
+    result.innerHTML = `<b>文案：</b>${titles}${pts}<div>详情：${esc(json.description||'')}</div><div>主图提示词：${esc(json.imagePrompt||'')}</div>${halluWarnHtml(it.hallu)}`;
     div.appendChild(result);
     if(withImg && json.imagePrompt){
       await sleep(1100);
@@ -658,7 +716,7 @@ function renderBatchSummary(){
   const failList = batchItems.filter(x=>x.selected && x.name && (x.status==='err' || x.status==='cancelled'));
   const pendingList = batchItems.filter(x=>x.selected && x.name && (!x.status || x.status==='pending'));
   if(!okList.length && !failList.length && !pendingList.length) return;
-  const toTpl = x=> ({name:x.name, cat:x.cat, titles:x.json.titles||[], sellingPoints:x.json.sellingPoints||[], description:x.json.description||'', imagePrompt:x.json.imagePrompt||''});
+  const toTpl = x=> ({name:x.name, cat:x.cat, titles:x.json.titles||[], sellingPoints:x.json.sellingPoints||[], description:x.json.description||'', imagePrompt:x.json.imagePrompt||'', hallu:x.hallu||[]});
   const box = document.createElement('div');
   box.id='batchSummary'; box.className='row-actions'; box.style.marginTop='12px';
   if(okList.length){
@@ -834,6 +892,7 @@ function tplToRow(t){
     'point1': pt[0]||'', 'point2': pt[1]||'', 'point3': pt[2]||'',
     'description': t.description||'',
     'imagePrompt': t.imagePrompt||'',
+    'riskTip': (t.hallu && t.hallu.length) ? ('⚠ 含原始信息外的硬参数：'+t.hallu.join('、')) : '通过',
     'savedAt': t.savedAt||''
   };
 }
